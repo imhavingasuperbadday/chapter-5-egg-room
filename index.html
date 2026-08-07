@@ -61,11 +61,43 @@ const settings = {
 
 // walk-code choices shown in the settings menu
 const WALK_MODES = [
-  { name: "Classic",   hint: "8-way smooth walk (prototype)" },
+  { name: "Classic 8-way", hint: "8-way smooth walk (prototype)" },
   { name: "Deltarune", hint: "obj_mainchara port: run + facing latch" }
 ];
 
 const MENU_STYLES = ["Classic", "Room preview"];
+const SETTINGS_STORAGE_KEY = "eggroom.settings.v1";
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || "{}");
+    if (Number.isFinite(saved.walkSpeed)) {
+      settings.walkSpeed = Math.max(0.5, Math.min(4, +saved.walkSpeed.toFixed(1)));
+    }
+    if (Number.isInteger(saved.krisSet)) {
+      settings.krisSet = Math.max(0, Math.min(KRIS_SETS.length - 1, saved.krisSet));
+    }
+    if (typeof saved.manVisible === "boolean") settings.manVisible = saved.manVisible;
+    if (Number.isInteger(saved.walkMode)) {
+      settings.walkMode = Math.max(0, Math.min(WALK_MODES.length - 1, saved.walkMode));
+    }
+    if (Number.isInteger(saved.menuStyle)) {
+      settings.menuStyle = Math.max(0, Math.min(MENU_STYLES.length - 1, saved.menuStyle));
+    }
+  } catch (_) {
+    // Storage may be unavailable or contain old/corrupt data; defaults are safe.
+  }
+}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); }
+  catch (_) { /* The game still works when browser storage is disabled. */ }
+}
+
+function updateSetting(change) {
+  change();
+  saveSettings();
+}
 
 // candidate egg-room trees, switchable in-game (press O, then a number)
 // bg_treetiles_new holds: floor checker, the FULL TREE (top-right), and 2 bushes
@@ -92,7 +124,7 @@ const TREES = [
 const img = {};          // loaded images
 const krisSets = [];     // per KRIS_SETS entry: {d:[...], u:[...], l:[...], r:[...]}
 const treeCol = [];      // per-tree collision alpha bitmaps {w,h,data}
-let fontAtlasBlack = null, fontAtlasWhite = null, fontAtlasRed = null;  // tinted atlases (source glyphs are white)
+let fontAtlasBlack = null, fontAtlasWhite = null, fontAtlasGray = null, fontAtlasRed = null;  // tinted atlases (source glyphs are white)
 const glyphs = {};       // charCode -> {sx,sy,w,h,shift,offset}
 let musicEl, eggSfxEl, blipEl, cursorEl;
 
@@ -277,13 +309,13 @@ function handleMenuKeys() {
   // settings menu
   if (k === "arrowup" || k === "w") { state.menuSel = (state.menuSel + 5) % 6; playSound(cursorEl, 0.5); }
   else if (k === "arrowdown" || k === "s") { state.menuSel = (state.menuSel + 1) % 6; playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 0 && (k === "arrowleft" || k === "a")) { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 0 && (k === "arrowright" || k === "d")) { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 1 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 2 && (k === "arrowleft" || k === "a")) { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 2 && (k === "arrowright" || k === "d")) { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 3 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.manVisible = !settings.manVisible; playSound(cursorEl, 0.5); }
-  else if (state.menuSel === 4 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 0 && (k === "arrowleft" || k === "a")) { updateSetting(() => { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 0 && (k === "arrowright" || k === "d")) { updateSetting(() => { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 1 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 2 && (k === "arrowleft" || k === "a")) { updateSetting(() => { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 2 && (k === "arrowright" || k === "d")) { updateSetting(() => { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 3 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.manVisible = !settings.manVisible; }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 4 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }); playSound(cursorEl, 0.5); }
   else if (k === "escape" || k === "backspace" || (state.menuSel === 5 && (k === "z" || k === "enter" || k === " "))) { state.menu = "title"; playSound(cursorEl, 0.5); }
 }
 
@@ -363,6 +395,7 @@ function drawText(str, x, y, color = "#000") {
   let atlas;
   if (color === "#fff" || color === "#ffffff") atlas = fontAtlasWhite;
   else if (color === "#ff6b6b") atlas = fontAtlasRed;
+  else if (color === "#aaa" || color === "#888") atlas = fontAtlasGray;
   else atlas = fontAtlasBlack;
   if (!atlas) return;
   let cx = x;
@@ -995,20 +1028,20 @@ function drawTitle() {
     drawText("(before the egg room)", 22, 64, "#aaa");
     const rows = [
       { label: "Walk speed",        value: () => settings.walkSpeed.toFixed(1) + " px/f @60",
-        dec: () => { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); },
-        inc: () => { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); } },
+        dec: () => updateSetting(() => { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); }),
+        inc: () => updateSetting(() => { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); }) },
       { label: "Walk code",         value: () => WALK_MODES[settings.walkMode].name,
-        dec: () => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; },
-        inc: () => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; } },
+        dec: () => updateSetting(() => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; }),
+        inc: () => updateSetting(() => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; }) },
       { label: "Kris sprite",       value: () => KRIS_SETS[settings.krisSet].name,
-        dec: () => { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; },
-        inc: () => { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; } },
-      { label: "The Man",           value: () => settings.manVisible ? "ON" : "OFF",
-        dec: () => { settings.manVisible = !settings.manVisible; },
-        inc: () => { settings.manVisible = !settings.manVisible; } },
-      { label: "Title menu",        value: () => MENU_STYLES[settings.menuStyle],
-        dec: () => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; },
-        inc: () => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; } }
+        dec: () => updateSetting(() => { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; }),
+        inc: () => updateSetting(() => { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; }) },
+      { label: "Man sprite",         value: () => settings.manVisible ? "VISIBLE" : "HIDDEN",
+        dec: () => updateSetting(() => { settings.manVisible = !settings.manVisible; }),
+        inc: () => updateSetting(() => { settings.manVisible = !settings.manVisible; }) },
+      { label: "Classic menu",       value: () => settings.menuStyle === 0 ? "ON" : "OFF",
+        dec: () => updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }),
+        inc: () => updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }) }
     ];
     let y = 100;
     for (let i = 0; i < rows.length; i++) {
@@ -1022,8 +1055,9 @@ function drawTitle() {
       y += 30;
     }
     drawText("Walk code: " + WALK_MODES[settings.walkMode].hint, 30, y + 12, "#aaa");
-    drawButton(120, y + 30, 100, "BACK", state.menuSel === 5);
-    addMenuBtn(120, y + 30, 100, "BACK", () => { state.menu = "title"; });
+    drawText("Man stays talkable when hidden. Settings save automatically.", 30, y + 28, "#aaa");
+    drawButton(120, y + 46, 100, "BACK", state.menuSel === 5);
+    addMenuBtn(120, y + 46, 100, "BACK", () => { state.menu = "title"; });
     drawText("Arrows/WASD + Z/Enter, or click. Esc: back", 22, canvas.height - 30, "#aaa");
   }
   ctx.restore();
@@ -1214,6 +1248,7 @@ const GLYPH_CSV = `32;79;81;3;16;3;0
 127;15;81;7;9;8;0`;
 
 async function boot() {
+  loadSettings();
   // kris sprite sets
   for (const set of KRIS_SETS) {
     const loaded = { d: [], u: [], l: [], r: [] };
@@ -1235,6 +1270,7 @@ async function boot() {
   parseFontCsv(GLYPH_CSV);
   fontAtlasBlack = tintAtlas("#000000");
   fontAtlasWhite = tintAtlas("#ffffff");
+  fontAtlasGray = tintAtlas("#999999");
   fontAtlasRed = tintAtlas("#ff6b6b");
 
   // audio
