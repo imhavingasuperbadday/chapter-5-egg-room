@@ -1,0 +1,1330 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Egg Room</title>
+<style>
+  html,body { margin:0; padding:0; background:#000; height:100%; overflow:hidden;
+              display:flex; align-items:center; justify-content:center; }
+  body.room-active { align-items:flex-end; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges;
+           position:relative; z-index:1;
+           width:min(100vw, calc(100vh * 16 / 9)); height:auto; background:#000; }
+</style>
+</head>
+<body>
+<canvas id="game" width="854" height="480" role="img" aria-label="The Egg Room, a playable pixel-art scene"></canvas>
+<script>
+"use strict";
+/* ============================================================
+   DELTARUNE â€” Chapter 5: The Egg Room (playable prototype)
+   Assets and dialogue decompiled from data.win (chapter5).
+   Room logic recreated from obj_room_man/Step_0.gml.
+   ============================================================ */
+
+const W = 640, H = 360;
+const RENDER_SCALE = 4 / 3;
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+const ASSETS = {
+  egg:     "assets/egg.png",
+  crackedLogo: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIIAAAAdCAIAAADpUSM8AAAB+UlEQVR4AeyUjW4DIQyDu73/O2/WfS3K8RMoN9ipSoVccJyExXTfj/jcYAJhww1MeDzChrDhFhO4xSXi13A/G37aH3vZtuoZQfw8HF8wLTwkHtjEqq4rSFlJmRhtEqmNjmnpqJUdxWglUhsdtbTxlzStFb+G1mS28k0bvl4froPP7C2+VKdvKxjZp2QrTqQ28PYOIlllCAZEA8LYIjArkI4ZOo2aNjg5EfrzCVRswMOskyXZg5ls6ZGOoNOoK3By/dC6X1LFBv8qt4l+1EX6NpSPa92jGBnt/3YfueGEpm/DRNFIeXcCJxvKhz9YrvpCqQYO1pmQUR+06ZbhejCgVXb3pCREz5E9CAPSESTq48kGXxrRdROYt8FazRPIbmkFWejK0faiRUJbFhLGpsBcwZHKdARHes3bMFI9NIMTqNhg3VaV7CgGk0EdNy97H91hvDuJ4HhWqVRTrZK/wlRsuFIucucmMGqDfUR2P9f1A7IYAnj9zxm14XqnqPCaQOX7ZIP1lr1Q/wfTqhQ4KMm0jq0H0mTLUy+O8UfRxN4KxkZh3sKyoJ9+ssGXRnTdBE428AQyLHsjsHzJKFqSMBYls8sJJRma7JiRiraYjOdYoir4y6aUSj9a6k82lOFg9kwgbNgz506XsKEzoD3hsGHPnDtdwobOgPaEfwEAAP//uKlB2QAAAAZJREFUAwBWG8hK3V2CSQAAAABJRU5ErkJggg==",
+  font:    "assets/fnt_main.png",
+  fontCsv: "assets/glyphs_fnt_main.csv",
+  music:   "assets/music.ogg",
+  eggSfx:  "assets/egg_sfx.wav",
+  blip:    "assets/blip.wav",
+  cursor:  "assets/cursor.wav"
+};
+
+// selectable Kris overworld sprite sets (all decompiled from chapter5)
+const KRIS_SETS = [
+  { name: "Kris (main)",         dir: "assets/kris/main" },
+  { name: "Kris (dark world)",   dir: "assets/kris/dark" },
+  { name: "Kris (bright)",       dir: "assets/kris/bright" },
+  { name: "Kris (shadow)",       dir: "assets/kris/shadow" },
+  { name: "Kris (heart)",        dir: "assets/kris/heart" },
+  { name: "Kris (soul)",         dir: "assets/kris/soul" },
+  { name: "Kris (balloon)",      dir: "assets/kris/balloon" }
+];
+
+// player-adjustable settings (title screen menu)
+const settings = {
+  walkSpeed: 1.5,   // Deltarune runs at 30fps, wspeed=3 -> 90px/s -> 1.5 at 60fps
+  krisSet: 1,        // dark-world Kris matches the reference scene
+  manVisible: false, // the man stays concealed behind the tree
+  walkMode: 1,       // 0 = Classic (prototype 8-way), 1 = Deltarune (obj_mainchara port)
+  menuStyle: 0       // 0 = cracked classic title, 1 = room preview title
+};
+
+// walk-code choices shown in the settings menu
+const WALK_MODES = [
+  { name: "Classic",   hint: "8-way smooth walk (prototype)" },
+  { name: "Deltarune", hint: "obj_mainchara port: run + facing latch" }
+];
+
+const MENU_STYLES = ["Classic", "Room preview"];
+
+// candidate egg-room trees, switchable in-game (press O, then a number)
+// bg_treetiles_new holds: floor checker, the FULL TREE (top-right), and 2 bushes
+const TREES = [
+  { name: "spr_candytree (ch1)",          file: "assets/trees/1.png" },
+  { name: "spr_candytree_tall (ch1)",     file: "assets/trees/2.png" },
+  { name: "spr_donation_hole_and_tree (ch1)", file: "assets/trees/3.png" },
+  { name: "treetiles_new - FULL TREE (ch1)", file: "assets/trees/4.png", crop: { x: 212, y: 0, w: 216, h: 186 }, flipX: true, trunkCollision: true },
+  { name: "treetiles_new - bush L (ch1)",    file: "assets/trees/4.png", crop: { x: 0, y: 191, w: 141, h: 133 } },
+  { name: "treetiles_new - bush R (ch1)",    file: "assets/trees/4.png", crop: { x: 141, y: 191, w: 180, h: 133 } },
+  { name: "spr_pinktree (ch5)",           file: "assets/trees/8.png" },
+  { name: "spr_pinktree_tall (ch5)",      file: "assets/trees/9.png" },
+  { name: "spr_pinktree_noleaves (ch5)",  file: "assets/trees/10.png" },
+  { name: "spr_flowerytree (ch5)",        file: "assets/trees/11.png" },
+  { name: "spr_dw_bluetree (ch5)",        file: "assets/trees/12.png" },
+  { name: "spr_talltree (ch5)",           file: "assets/trees/13.png" },
+  { name: "spr_darkfruit_tree_big (ch5)", file: "assets/trees/14.png" },
+  { name: "spr_dw_pine_tree (ch5)",       file: "assets/trees/15.png" },
+  { name: "spr_dw_castle_tree (ch5)",     file: "assets/trees/16.png" },
+  { name: "spr_fruittree (ch5)",          file: "assets/trees/17.png" },
+  { name: "spr_newsun_clifftree (ch5)",   file: "assets/trees/18.png" }
+];
+
+const img = {};          // loaded images
+const krisSets = [];     // per KRIS_SETS entry: {d:[...], u:[...], l:[...], r:[...]}
+const treeCol = [];      // per-tree collision alpha bitmaps {w,h,data}
+let fontAtlasBlack = null, fontAtlasWhite = null, fontAtlasRed = null;  // tinted atlases (source glyphs are white)
+const glyphs = {};       // charCode -> {sx,sy,w,h,shift,offset}
+let musicEl, eggSfxEl, blipEl, cursorEl;
+
+const KRIS = { x: 320, y: 333, dir: "u", moving: false, anim: 0, animT: 0 };
+// The man has no sprite: in the game he is built from spr_pxwhite (a 1x1 white
+// pixel) stretched into a white silhouette. We draw that silhouette directly.
+// MAN_POS is kept in sync with the tree (moveable with P + arrows).
+const MAN_POS = { x: 340, y: 154 };          // feet position, just behind the tree trunk
+const TREE = { x: 340, y: 200, z: 0.75 };    // base of the tree (position editable with P)
+// The reference room has three clean stepped widths rather than a plain T.
+const FLOOR = {
+  tx: 263, ty: 92, tw: 30, th: 30,     // raised tile behind the upper leaves
+  hx: 233, hy: 122, hw: 182, hh: 91,     // canopy room
+  mx: 263, my: 213, mw: 122, mh: 30,     // first inset
+  vx: 294, vy: 243, vw: 60, vh: 117      // narrow approach
+};
+const TREE_R = 20;                           // trunk collision radius
+
+const state = {
+  started: false,
+  manGone: false,      // the man leaves after the first interaction
+  gotEgg: false,
+  talked: 0,           // 0 = first talk, 1 = second, 2+ = "..."
+  haveAlleggs: false,  // debug toggle (normally you'd carry eggs from ch2-4)
+  fade: 0, fadeTo: 0,
+  dbg: false,
+  treeSel: 3,          // current tree index in TREES (3 = treetiles_new FULL TREE)
+  treeSelMode: false,  // O-key selector open
+  treePage: 0,         // selector page (0 = 1-10, 1 = 11-16)
+  moveMode: false,     // P-key tree positioning mode
+  menu: "title",       // title screen menu: "title" | "settings"
+  menuSel: 0,          // selected row in the settings menu
+  completedRun: false  // set after leaving with the Egg; next start resets the room
+};
+
+/* ---------------- dialogue engine ---------------- */
+const DLG = {
+  queue: [],       // {text, choices, blip, onDone, slow}
+  idx: 0, pos: 0,  // current page index, char position
+  showing: false,
+  typing: true,
+  choice: -1,      // -1 = no choice on this page
+  choiceSel: 0,
+  timer: 0,        // pause timer for ^1
+  page: null,
+  onDone: null
+};
+
+function stripGameCodes(s) {
+  // remove \E0-style speaker/effect codes, keep ^1 pauses and / page breaks
+  return s.replace(/\\[A-Z][0-9]*/g, "").replace(/\\[a-z0-9]/g, "");
+}
+
+function pushPage(text, opts = {}) {
+  DLG.queue.push({
+    text: stripGameCodes(text).replace(/[\/%]+$/, ""),
+    choices: opts.choices || null,
+    slow: opts.slow || false,
+    onDone: opts.onDone || null
+  });
+}
+
+function dMake() {   // open next queued page
+  if (DLG.queue.length === 0) { return; }
+  const p = DLG.queue.shift();
+  DLG.page = p;
+  DLG.pos = 0;
+  DLG.typing = true;
+  DLG.choice = -1;
+  DLG.choiceSel = 0;
+  DLG.timer = 0;
+  DLG.pause = 0;
+  DLG.showing = true;
+  DLG.onDone = p.onDone;
+}
+
+function dEx() { return DLG.showing && DLG.queue.length === 0; }
+function dDone() { // advance/close the current page
+  if (!DLG.showing) return;
+  if (DLG.typing) { DLG.typing = false; DLG.pos = DLG.page.text.length; return; }
+  if (DLG.page.choices && DLG.choice === -1) { return; } // awaiting choice
+  // page over -> next page or close (run onDone first so it can queue pages)
+  DLG.showing = false;
+  const cb = DLG.onDone; DLG.onDone = null;
+  if (cb) cb();
+  if (DLG.queue.length > 0) { dMake(); }
+}
+
+function pushChoice(msg, options, onDone) {
+  DLG.queue.push({
+    text: stripGameCodes(msg).replace(/[\/%]+$/, ""), choices: options, slow: false,
+    onDone: onDone || null
+  });
+}
+
+function startDialogue() { DLG.showing = true; dMake(); }
+
+/* ---------------- the man's scene (from obj_room_man/Step_0.gml) ---------------- */
+
+function manInteract() {
+  if (state.talked === 0) {
+    pushPage("* (Well^1, there is a man here.)/");
+    pushPage("* (He offers you something.)/");
+    pushChoice("* (He offers you something.)/", ["Yes", "No"], () => {
+      if (DLG.choice === 0) {
+        state.gotEgg = true;
+        playSound(eggSfxEl);
+        pushPage("* (You received the \"Egg\".)/");
+        pushChoice("* (Ask for more^1, or leave?)/", ["Ask for more", "Do Not"], () => {
+          if (state.haveAlleggs) {
+            pushPage("* (Well^1, the man put his hand softly on your shoulder.)/");
+            pushPage("* (And^1, showing you his empty palm...)/");
+            pushPage(DLG.choice === 0
+              ? "* (He put his finger to his mouth^1, smiled^1, and shook his head.)/"
+              : "* (He put his finger to his mouth^1, smiled^1, and nodded his head.)/");
+            pushPage("* (It seems you have everything.)/");
+            pushPage("* (...)/");
+            pushPage("* (He waved goodbye^1, looking away slightly after a moment.)/");
+            pushPage("* (...)/");
+            pushPage("* (Kris felt a strange melancholy.)/");
+            pushPage("* (It was a feeling that they should not look for the man anymore.)/");
+            pushPage("* (..^1. even though they had never done such a thing in the first place.)/");
+          } else {
+            pushPage("* (The man nodded vigorously.)/");
+            pushPage("* (He pointed into the distance.)/");
+            pushPage("* (Over there^1, was another tree.)/");
+            pushPage("* (In fact^1, it seemed very much like this tree.)/");
+            pushPage("* (Craning your head^1, you noticed that there was another tree after that.)/");
+            pushPage("* (It felt a little bit like looking into series of mirrors...)/");
+            pushPage("* (Your head began to spin.)/");
+            pushPage("* (..^1. the man saw this and looked concerned.)/");
+            pushPage("* (He seemed like he wanted to speak^1, but...)/");
+            pushPage("* (...)/");
+            pushPage("* (Well^1, the man smiled.)/");
+            pushPage("* (And he waved goodbye^1, for now.)/");
+          }
+          state.manGone = true;
+        });
+      } else {
+        pushPage("* (Then he needn't be here.)/");
+      }
+    });
+  } else if (state.talked === 1) {
+    if (state.haveAlleggs || state.gotEgg) {
+      pushPage("* (Well^1, there is not a man here.)/");
+      pushPage("* (..^1. but^1, on Kris's shoulder^1, a weight remained.)/");
+      pushPage("* (A weight that carried far^1, far^1, into the distance...)/");
+    } else {
+      pushPage("* (Well^1, there is not a man here.)/");
+    }
+  } else {
+    pushPage("* (...)/");
+  }
+  state.talked++;
+  state.manGone = true;
+}
+
+function treeInteract() {
+  if (state.manGone) { pushPage("* (It is a tree.)/"); }
+  else { pushPage("* (He is behind the tree.)/"); }
+}
+
+/* ---------------- input ---------------- */
+const keys = {};
+const PRESSED = {};
+window.addEventListener("keydown", e => {
+  if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+  if (!e.repeat) PRESSED[e.key.toLowerCase()] = true;
+  keys[e.key.toLowerCase()] = true;
+});
+window.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+// title / settings menu keyboard navigation
+function handleMenuKeys() {
+  if (state.started) return;
+  const k = pressedAnyKey();
+  if (!k) return;
+  if (state.menu === "title") {
+    if (k === "z" || k === "enter" || k === " ") { startGame(); }
+    else if (k === "s" || k === "b") { state.menu = "settings"; state.menuSel = 0; playSound(cursorEl, 0.5); }
+    return;
+  }
+  // settings menu
+  if (k === "arrowup" || k === "w") { state.menuSel = (state.menuSel + 5) % 6; playSound(cursorEl, 0.5); }
+  else if (k === "arrowdown" || k === "s") { state.menuSel = (state.menuSel + 1) % 6; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 0 && (k === "arrowleft" || k === "a")) { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 0 && (k === "arrowright" || k === "d")) { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 1 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 2 && (k === "arrowleft" || k === "a")) { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 2 && (k === "arrowright" || k === "d")) { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 3 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.manVisible = !settings.manVisible; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 4 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; playSound(cursorEl, 0.5); }
+  else if (k === "escape" || k === "backspace" || (state.menuSel === 5 && (k === "z" || k === "enter" || k === " "))) { state.menu = "title"; playSound(cursorEl, 0.5); }
+}
+
+function pressedAnyKey() {
+  for (const n of ["z", "enter", " ", "s", "b", "arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "d", "escape", "backspace"]) {
+    if (pressed(n)) return n;
+  }
+  return null;
+}
+
+function pressed(name) {
+  const k = PRESSED[name]; PRESSED[name] = false;
+  return !!k;
+}
+function anyKey(nameList) { return nameList.some(n => pressed(n)); }
+function held(name) { return !!keys[name]; }
+function clearPressed() {
+  // Edge-triggered inputs last for one frame only. Without this, movement
+  // used on the way to the tree can linger and change a later dialogue choice.
+  for (const key of Object.keys(PRESSED)) PRESSED[key] = false;
+}
+
+/* ---------------- audio ---------------- */
+function makeEl(src, loop) {
+  const a = new Audio(src);
+  a.loop = !!loop;
+  a.volume = 0.9;
+  return a;
+}
+function playSound(el, vol) {
+  if (!el) return;
+  const c = el.cloneNode();
+  c.volume = vol || 0.9;
+  c.play().catch(() => {});
+}
+
+/* ---------------- font ---------------- */
+function parseFontCsv(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  lines.shift(); // header
+  for (const line of lines) {
+    const p = line.split(";");
+    if (p.length < 7) continue;
+    const code = parseInt(p[0], 10);
+    glyphs[code] = {
+      sx: parseInt(p[1], 10), sy: parseInt(p[2], 10),
+      w:  parseInt(p[3], 10), h:  parseInt(p[4], 10),
+      shift: parseInt(p[5], 10), offset: parseInt(p[6], 10)
+    };
+  }
+}
+
+function tintAtlas(color) {
+  const out = document.createElement("canvas");
+  out.width = img.font.width;
+  out.height = img.font.height;
+  const c = out.getContext("2d");
+  c.drawImage(img.font, 0, 0);
+  c.globalCompositeOperation = "source-in";
+  c.fillStyle = color;
+  c.fillRect(0, 0, out.width, out.height);
+  c.globalCompositeOperation = "source-over";
+  return out;
+}
+
+function textWidth(str) {
+  let w = 0;
+  for (const ch of str) {
+    const g = glyphs[ch.charCodeAt(0)];
+    if (!g) { w += 7; continue; }
+    w += g.shift;
+  }
+  return w;
+}
+
+function drawText(str, x, y, color = "#000") {
+  let atlas;
+  if (color === "#fff" || color === "#ffffff") atlas = fontAtlasWhite;
+  else if (color === "#ff6b6b") atlas = fontAtlasRed;
+  else atlas = fontAtlasBlack;
+  if (!atlas) return;
+  let cx = x;
+  for (const ch of str) {
+    if (ch === "\n") { continue; }
+    const g = glyphs[ch.charCodeAt(0)];
+    if (!g) { cx += 7; continue; }
+    if (g.w > 0 && g.h > 0) {
+      ctx.drawImage(atlas, g.sx, g.sy, g.w, g.h, cx, y + g.offset, g.w, g.h);
+    }
+    cx += g.shift;
+  }
+}
+
+function drawCrackedLogo(x, y) {
+  if (img.crackedLogo) {
+    // Exact 2x pixel mask supplied in the reference, reduced to game resolution.
+    ctx.drawImage(img.crackedLogo, x, y - 2, 65, 14.5);
+  } else {
+    drawText("DELTARUNE", x, y, "#fff");
+  }
+}
+
+/* ---------------- room / rendering ---------------- */
+function floorContains(x, y) {
+  const px = x;
+  const py = y - 2; // Kris's feet, with a small margin from the void
+  // Inset only the exposed horizontal edges. The adjoining Y edges stay
+  // flush, otherwise tiny invisible collision gaps appear at each step.
+  const inside = (rx, ry, rw, rh) =>
+    px >= rx + 7 && px <= rx + rw - 7 && py >= ry && py <= ry + rh;
+  return inside(FLOOR.tx, FLOOR.ty + 3, FLOOR.tw, FLOOR.th - 3) ||
+         inside(FLOOR.hx, FLOOR.hy, FLOOR.hw, FLOOR.hh) ||
+         inside(FLOOR.mx, FLOOR.my, FLOOR.mw, FLOOR.mh) ||
+         inside(FLOOR.vx, FLOOR.vy, FLOOR.vw, FLOOR.vh);
+}
+
+// per-pixel collision against the current tree's alpha bitmap
+function roomCollides(x, y) {
+  const t = TREES[state.treeSel];
+  if (t && t.trunkCollision) {
+    // Only the trunk and roots are solid. The canopy must stay passable so
+    // Kris can circle around either side and reach the man behind the tree.
+    const trunkX = TREE.x - 6;
+    const inTrunk = Math.abs(x - trunkX) < 13 &&
+                    y > TREE.y - 48 && y < TREE.y + 2;
+    const rootDx = (x - (TREE.x - 8)) / 29;
+    const rootDy = (y - (TREE.y - 1)) / 11;
+    const inRoots = rootDx * rootDx + rootDy * rootDy < 1;
+    return inTrunk || inRoots;
+  }
+  if (t && t.img && t.col) {
+    const z = TREE.z;
+    const dw = t.img.width * z, dh = t.img.height * z;
+    const left = TREE.x - dw / 2, top = TREE.y - dh;
+    const py = y - 10; // collision point at Kris's mid-body
+    let lx = Math.floor((x - left) / z);
+    const ly = Math.floor((py - top) / z);
+    if (t.flipX) lx = t.col.w - 1 - lx;
+    if (lx >= 0 && ly >= 0 && lx < t.col.w && ly < t.col.h) {
+      return t.col.data[ly * t.col.w + lx] > 40;
+    }
+    return false;
+  }
+  // fallback: circle around the trunk
+  const dx = x - TREE.x, dy = (y - 10) - (TREE.y - 42);
+  return dx * dx + dy * dy < (TREE_R + 6) * (TREE_R + 6);
+}
+
+/* ---------------- player movement ---------------- */
+// Classic mode: the prototype's original 8-way smooth walker.
+// Deltarune mode: a faithful port of obj_mainchara/Step_0.gml (chapter 2,
+// light world). The game runs at 30fps, this prototype at 60fps, so every
+// per-frame constant from the game (walktimer, walkbuffer, runtimer ramp)
+// is halved to keep the exact same feel.
+const FACING_DIR = ["d", "r", "u", "l"]; // 0=down 1=right 2=up 3=left
+const DT = {
+  facing: 2,      // global.facing
+  idleLast: true, // no direction held last frame (the game's "nopress")
+  walktimer: 0,
+  walkbuffer: 0,
+  runtimer: 0
+};
+
+function updatePlayer() {
+  if (settings.walkMode === 1) { updatePlayerDT(); }
+  else { updatePlayerClassic(); }
+}
+
+function updatePlayerClassic() {
+  if (DLG.showing) { KRIS.moving = false; return; }
+  let mx = 0, my = 0;
+  if (held("arrowleft") || held("a")) mx -= 1;
+  if (held("arrowright") || held("d")) mx += 1;
+  if (held("arrowup") || held("w")) my -= 1;
+  if (held("arrowdown") || held("s")) my += 1;
+  KRIS.moving = (mx !== 0 || my !== 0);
+  if (KRIS.moving) {
+    if (mx !== 0 && my !== 0) { mx *= 0.7071; my *= 0.7071; }
+    KRIS.dir = my < 0 ? "u" : my > 0 ? "d" : mx < 0 ? "l" : "r";
+    const s = settings.walkSpeed * speedScale;
+    const nx = KRIS.x + mx * s, ny = KRIS.y + my * s;
+    if (!roomCollides(nx, KRIS.y)) KRIS.x = nx;
+    if (!roomCollides(KRIS.x, ny)) KRIS.y = ny;
+    KRIS.x = Math.max(16, Math.min(W - 16, KRIS.x));
+    KRIS.y = Math.max(24, Math.min(H - 16, KRIS.y));
+    KRIS.animT += speedScale;
+    if (KRIS.animT >= 9) { KRIS.animT = 0; KRIS.anim = (KRIS.anim + 1) % 4; }
+  } else {
+    KRIS.animT = 0; KRIS.anim = 0;
+  }
+}
+
+// port of obj_mainchara/Step_0.gml movement (chapter 2, light world):
+// run boost, facing latch, wall-slide + diagonal-corner resolution, and the
+// walktimer/walkbuffer animation cycle.
+function updatePlayerDT() {
+  if (DLG.showing) { KRIS.moving = false; return; }
+  const nowx = KRIS.x, nowy = KRIS.y;
+
+  const press_l = (held("arrowleft")  || held("a")) ? 1 : 0;
+  const press_r = (held("arrowright") || held("d")) ? 1 : 0;
+  const press_u = (held("arrowup")    || held("w")) ? 1 : 0;
+  const press_d = (held("arrowdown")  || held("s")) ? 1 : 0;
+  const nopress = !(press_l || press_r || press_u || press_d);
+
+  // run = hold X or Shift (button2: input_k[5]=X, input_k[8]=Shift)
+  const run = (held("x") || held("shift")) ? 1 : 0;
+
+  // wspeed = bwspeed + run boost. The game adds +1/+2/+3 (30fps units);
+  // scaled by walkSpeed/3 so the ratios stay 4/3, 5/3, 2x at 60fps.
+  const boost = settings.walkSpeed / 3;
+  let wspeed = settings.walkSpeed;
+  if (run === 1) {
+    wspeed = settings.walkSpeed + boost;
+    if (DT.runtimer > 10) wspeed = settings.walkSpeed + 2 * boost;
+    if (DT.runtimer > 60) wspeed = settings.walkSpeed + 3 * boost;
+  }
+  wspeed *= speedScale; // frame-rate normalization (1.0 at 60fps)
+
+  let px = 0, py = 0, pressdir = -1;
+  if (press_r === 1) { px = wspeed;  pressdir = 1; }
+  if (press_l === 1) { px = -wspeed; pressdir = 3; }
+  if (press_d === 1) { py = wspeed;  pressdir = 0; }
+  if (press_u === 1) { py = -wspeed; pressdir = 2; }
+
+  // facing latch: new press from idle snaps facing; otherwise facing only
+  // changes when the opposite of the current axis is pressed, or the key
+  // holding the current axis is released.
+  if (DT.idleLast && pressdir !== -1) { DT.facing = pressdir; }
+  if (DT.facing === 2) {
+    if (press_d === 1) { DT.facing = 0; }
+    if (press_u === 0 && pressdir !== -1) { DT.facing = pressdir; }
+  }
+  if (DT.facing === 0) {
+    if (press_u === 1) { DT.facing = 2; }
+    if (press_d === 0 && pressdir !== -1) { DT.facing = pressdir; }
+  }
+  if (DT.facing === 3) {
+    if (press_r === 1) { DT.facing = 1; }
+    if (press_l === 0 && pressdir !== -1) { DT.facing = pressdir; }
+  }
+  if (DT.facing === 1) {
+    if (press_l === 1) { DT.facing = 3; }
+    if (press_r === 0 && pressdir !== -1) { DT.facing = pressdir; }
+  }
+
+  let xmeet = 0, ymeet = 0, xymeet = 0;
+  let bkx = 0, bky = 0, bkxy = 0;
+
+  if (roomCollides(KRIS.x + px, KRIS.y + py)) { xymeet = 1; }
+  // X axis: slide vertically along the wall, then snap px to a free spot
+  if (roomCollides(KRIS.x + px, KRIS.y)) {
+    xmeet = 1; bkx = 0;
+    for (let g = wspeed; g > 0; g -= 1) {
+      if (press_d === 0 && !roomCollides(KRIS.x + px, KRIS.y - g)) { KRIS.y -= g; py = 0; break; }
+      if (press_u === 0 && !roomCollides(KRIS.x + px, KRIS.y + g)) { KRIS.y += g; py = 0; break; }
+    }
+    if (px > 0) { for (let i = px; i >= 0; i -= 1) { if (!roomCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
+    if (px < 0) { for (let i = px; i <= 0; i += 1) { if (!roomCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
+    if (bkx === 0) { px = 0; }
+  }
+  // Y axis: slide horizontally along the wall, then snap py to a free spot
+  if (roomCollides(KRIS.x, KRIS.y + py)) {
+    ymeet = 1; bky = 0;
+    for (let g = wspeed; g > 0; g -= 1) {
+      if (press_r === 0 && !roomCollides(KRIS.x - g, KRIS.y + py)) { KRIS.x -= g; px = 0; break; }
+      if (press_l === 0 && !roomCollides(KRIS.x + g, KRIS.y + py)) { KRIS.x += g; px = 0; break; }
+    }
+    if (py > 0) { for (let i = py; i >= 0; i -= 1) { if (!roomCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
+    if (py < 0) { for (let i = py; i <= 0; i += 1) { if (!roomCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
+    if (bky === 0) { py = 0; }
+  }
+  // diagonal corner resolution: shrink the displacement toward (0,0)
+  if (roomCollides(KRIS.x + px, KRIS.y + py)) {
+    xymeet = 1; bkxy = 0;
+    let i = px, j = py;
+    while (j !== 0 || i !== 0) {
+      if (!roomCollides(KRIS.x + i, KRIS.y + j)) { px = i; py = j; bkxy = 1; break; }
+      if (Math.abs(j) >= 1) { j = j > 0 ? j - 1 : j + 1; } else { j = 0; }
+      if (Math.abs(i) >= 1) { i = i > 0 ? i - 1 : i + 1; } else { i = 0; }
+    }
+    if (bkxy === 0) { px = 0; py = 0; }
+  }
+
+  // run timer ramps while running, moving, and free of walls
+  let runmove = 0;
+  if (run === 1 && xmeet === 0 && ymeet === 0 && xymeet === 0) {
+    if (px !== 0 || py !== 0) { runmove = 1; DT.runtimer += 0.5 * speedScale; }
+    else { DT.runtimer = 0; }
+  } else {
+    DT.runtimer = 0;
+  }
+
+  KRIS.x += px;
+  KRIS.y += py;
+  KRIS.x = Math.max(16, Math.min(W - 16, KRIS.x));
+  KRIS.y = Math.max(24, Math.min(H - 16, KRIS.y));
+  KRIS.dir = FACING_DIR[DT.facing];
+
+  // walk animation cycle (Deltarune constants halved for 60fps, time-normalized)
+  let walk = 0;
+  if ((KRIS.x !== nowx || KRIS.y !== nowy) && !DT.idleLast) { walk = 1; }
+  if (walk === 1) { DT.walkbuffer = 6; }
+  if (DT.walkbuffer > 3) {
+    DT.walktimer += 0.75 * speedScale;
+    if (runmove === 1) { DT.walktimer += 0.75 * speedScale; }
+    if (DT.walktimer >= 40) { DT.walktimer -= 40; }
+    if (DT.walktimer < 10) { KRIS.anim = 0; }
+    else if (DT.walktimer < 20) { KRIS.anim = 1; }
+    else if (DT.walktimer < 30) { KRIS.anim = 2; }
+    else { KRIS.anim = 3; }
+  }
+  if (DT.walkbuffer <= 0) {
+    if (DT.walktimer < 10) { DT.walktimer = 9.5; }
+    else if (DT.walktimer < 20) { DT.walktimer = 19.5; }
+    else if (DT.walktimer < 30) { DT.walktimer = 29.5; }
+    else { DT.walktimer = 39.5; }
+    KRIS.anim = 0;
+  }
+  DT.walkbuffer -= 0.375 * speedScale;
+  DT.idleLast = nopress;
+  KRIS.moving = walk === 1;
+}
+
+function nearMan() {
+  const dx = KRIS.x - MAN_POS.x, dy = KRIS.y - MAN_POS.y;
+  // Generous enough to talk from either side or just in front of the roots.
+  return dx * dx + dy * dy < 62 * 62;
+}
+function nearTreeBack() {
+  // behind the tree (walk up past the trunk)
+  return KRIS.x > TREE.x - 48 && KRIS.x < TREE.x + 48 &&
+         KRIS.y > TREE.y - 108 && KRIS.y < TREE.y - 40;
+}
+
+function handleInteract() {
+  if (DLG.showing) {
+    if (!(DLG.page.choices && DLG.choice === -1)) {
+      // only advance on an actual keypress (not every frame)
+      if (anyKey(["z", "enter", " "])) { dDone(); }
+    }
+    return;
+  }
+  if (!anyKey(["z", "enter", " "])) return;
+  if (nearMan()) { manInteract(); startDialogue(); }
+  else if (nearTreeBack()) { treeInteract(); startDialogue(); }
+}
+
+function handleChoiceInput() {
+  if (!DLG.showing || !DLG.page.choices || DLG.choice !== -1) return;
+  if (DLG.typing) return; // Z while typing only finishes the text (Deltarune behavior)
+  const c = DLG.page.choices;
+  if (anyKey(["arrowup", "w", "arrowdown", "s"])) {
+    DLG.choiceSel = (DLG.choiceSel + 1) % c.length;
+    playSound(cursorEl, 0.6);
+  }
+  if (anyKey(["z", "enter", " "])) {
+    playSound(cursorEl, 0.6);
+    DLG.choice = DLG.choiceSel;
+    dDone(); // choosing immediately closes the box and continues
+  }
+}
+
+function updateDialogue() {
+  if (!DLG.showing) return;
+  handleChoiceInput();
+  if (DLG.page.choices && DLG.choice === -1 && !DLG.typing) {
+    return; // waiting for choice (text already typed out)
+  }
+  if (anyKey(["z", "enter", " "])) { dDone(); return; }
+  if (DLG.typing) {
+    if (DLG.pause > 0) { DLG.pause -= speedScale; return; }
+    const speed = DLG.page.slow ? 0.45 : 0.9; // chars per frame (Deltarune pace, at 60fps)
+    DLG.timer += speed * speedScale;
+    while (DLG.timer >= 1 && DLG.pos < DLG.page.text.length) {
+      const ch = DLG.page.text[DLG.pos];
+      if (ch === "^" && DLG.page.text[DLG.pos + 1] === "1") {
+        DLG.pos += 2; DLG.timer = 0; DLG.pause = 30;
+        break;
+      }
+      DLG.pos++;
+      DLG.timer -= 1;
+      playSound(blipEl, 0.18);
+    }
+    if (DLG.pos >= DLG.page.text.length) { DLG.typing = false; }
+  }
+}
+
+function visibleText() {
+  const t = DLG.page.text;
+  let out = "";
+  for (let i = 0; i < DLG.pos; i++) {
+    const ch = t[i];
+    if (ch === "^" && t[i + 1] === "1") { i++; continue; }
+    out += ch;
+  }
+  return out;
+}
+
+/* ---------------- render ---------------- */
+function drawPlayer() {
+  const set = krisSets[settings.krisSet];
+  if (!set) return;
+  const frame = KRIS.anim;
+  const spr = set[KRIS.dir][frame];
+  if (!spr) return;
+  const playerScale = 1.5;
+  const dw = spr.width * playerScale;
+  const dh = spr.height * playerScale;
+  ctx.drawImage(spr, Math.round(KRIS.x) - dw / 2, Math.round(KRIS.y) - dh, dw, dh);
+}
+
+function drawFloor() {
+  // black void
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  // Flat sampled palette and stepped silhouette from the reference image.
+  ctx.fillStyle = "#612c62";
+  ctx.fillRect(FLOOR.tx, FLOOR.ty, FLOOR.tw, FLOOR.th);
+  ctx.fillRect(FLOOR.hx, FLOOR.hy, FLOOR.hw, FLOOR.hh);
+  ctx.fillRect(FLOOR.mx, FLOOR.my, FLOOR.mw, FLOOR.mh);
+  ctx.fillRect(FLOOR.vx, FLOOR.vy, FLOOR.vw, FLOOR.vh);
+}
+
+function drawMan() {
+  // The man: a white silhouette (in the game he is a stretched 1x1 white pixel).
+  if (!settings.manVisible) return; // invisible but still talkable
+  const x = Math.round(MAN_POS.x), y = Math.round(MAN_POS.y);
+  ctx.fillStyle = "#ffffff";
+  // head
+  roundRect(ctx, x - 6, y - 46, 12, 13, 6); ctx.fill();
+  // body
+  roundRect(ctx, x - 8, y - 33, 16, 33, 7); ctx.fill();
+}
+
+function drawTreeAndMan() {
+  // the selected egg-room tree (cycle with O + number keys, position with P)
+  const t = TREES[state.treeSel];
+  // The man occupies the background layer and should never cover the tree.
+  if (!state.manGone) { drawMan(); }
+  if (t && t.img) {
+    const dw = t.img.width * TREE.z, dh = t.img.height * TREE.z;
+    if (t.flipX) {
+      ctx.save();
+      ctx.translate(Math.round(TREE.x), 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(t.img, -dw / 2, TREE.y - dh, dw, dh);
+      ctx.restore();
+    } else {
+      ctx.drawImage(t.img, Math.round(TREE.x) - dw / 2, TREE.y - dh, dw, dh);
+    }
+  }
+}
+
+function drawMoveMode() {
+  if (!state.moveMode) return;
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.fillRect(0, 0, W, H);
+  drawText("TREE POSITIONING", 22, 40, "#fff");
+  drawText("Arrows: move 1px   +/-: scale   Esc/P: done", 22, 58, "#aaa");
+  drawText("x = " + Math.round(TREE.x), 22, 100, "#fff");
+  drawText("y = " + Math.round(TREE.y), 22, 122, "#fff");
+  drawText("z (scale) = " + TREE.z, 22, 144, "#fff");
+}
+
+function playerBehindTree() {
+  // Depth is determined at the roots: above this baseline Kris is behind it.
+  return KRIS.y < TREE.y - 4;
+}
+
+function drawDialogueBox() {
+  if (!DLG.showing) return;
+  const bx = 22, by = H - 108, bw = W - 44, bh = 88;
+  ctx.fillStyle = "#ffffff";
+  roundRect(ctx, bx, by, bw, bh, 10);
+  ctx.fill();
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 2;
+  roundRect(ctx, bx, by, bw, bh, 10);
+  ctx.stroke();
+
+  const page = DLG.page;
+  let txt = visibleText();
+  let line = "";
+  const maxW = bw - 34;
+  const lines = [];
+  for (const ch of txt) {
+    const w = textWidth(line + ch);
+    if (w > maxW && line.length > 0) { lines.push(line); line = ch; }
+    else { line += ch; }
+  }
+  if (line.length > 0 || lines.length === 0) lines.push(line);
+  const lh = 16;
+  let y = by + 18;
+  for (const l of lines.slice(0, 3)) {
+    drawText(l, bx + 18, y, "#000");
+    y += lh;
+  }
+
+  // choice box
+  if (page.choices && DLG.typing === false) {
+    const opts = page.choices;
+    const maxOptW = Math.max(...opts.map(o => textWidth(o))) + 24;
+    const cbx = bx + bw - maxOptW - 20;
+    const cby = by - 14 - opts.length * 20;
+    ctx.fillStyle = "#ffffff";
+    roundRect(ctx, cbx, cby, maxOptW, opts.length * 20 + 10, 6);
+    ctx.fill();
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cbx, cby, maxOptW, opts.length * 20 + 10, 6);
+    ctx.stroke();
+    for (let i = 0; i < opts.length; i++) {
+      drawText(opts[i], cbx + 18, cby + 8 + i * 20, "#000");
+      if (i === DLG.choiceSel) {
+        // the red SOUL heart cursor (Deltarune choice cursor)
+        drawSoul(cbx + 11, cby + 15 + i * 20, 0.8);
+      }
+    }
+  }
+
+  // advance arrow
+  if (!DLG.typing && !page.choices) {
+    const blink = (Math.floor(Date.now() / 400) % 2) === 0;
+    if (blink) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(bx + bw - 22, by + bh - 22, 9, 9);
+    }
+  }
+}
+
+function drawSoul(x, y, s) {
+  // red SOUL heart: two lobes on top, point at the bottom
+  ctx.fillStyle = "#ff0000";
+  ctx.beginPath();
+  ctx.arc(x - 4 * s, y - 3 * s, 4 * s, 0, Math.PI * 2);
+  ctx.arc(x + 4 * s, y - 3 * s, 4 * s, 0, Math.PI * 2);
+  ctx.moveTo(x - 8 * s, y - 2 * s);
+  ctx.lineTo(x + 8 * s, y - 2 * s);
+  ctx.lineTo(x, y + 8 * s);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.lineTo(x + w - r, y);
+  c.quadraticCurveTo(x + w, y, x + w, y + r);
+  c.lineTo(x + w, y + h - r);
+  c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  c.lineTo(x + r, y + h);
+  c.quadraticCurveTo(x, y + h, x, y + h - r);
+  c.lineTo(x, y + r);
+  c.quadraticCurveTo(x, y, x + r, y);
+  c.closePath();
+}
+
+function drawHud() {
+  if (state.gotEgg && img.egg) {
+    // key item: EGG
+    const bx = W - 118, by = 12, bw = 106, bh = 30;
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    roundRect(ctx, bx, by, bw, bh, 6); ctx.fill();
+    ctx.drawImage(img.egg, bx + 6, by + 6);
+    drawText("EGG", bx + 34, by + 9, "#fff");
+  }
+  if (state.haveAlleggs && state.dbg) {
+    ctx.fillStyle = "#fff";
+    drawText("DEBUG: carrying all 4 eggs", 12, 14, "#fff");
+  }
+  if (state.started && state.dbg) { drawTreeHudLines(); }
+}
+
+function drawTreeHudLines() {
+  drawText("Tree " + (state.treeSel + 1) + "/" + TREES.length + ": " + TREES[state.treeSel].name, 12, 30, "#aaa");
+  drawText("[O] pick a tree   [P] move tree", 12, 46, "#888");
+  if (settings.walkMode === 1) { drawText("X/Shift: run   (Deltarune walk code)", 12, 62, "#888"); }
+}
+
+function drawTreeSelector() {
+  if (!state.treeSelMode) return;
+  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  ctx.fillRect(0, 0, W, H);
+  drawText("TREE SELECTOR", 22, 40, "#fff");
+  drawText("Press a number to switch. [ ] page  Esc/O close.", 22, 58, "#aaa");
+  const start = state.treePage * 10;
+  const end = Math.min(TREES.length, start + 10);
+  let y = 90;
+  for (let i = start; i < end; i++) {
+    const num = (i - start) + 1;
+    const label = num + ". " + TREES[i].name;
+    const sel = i === state.treeSel;
+    drawText(label, 30, y, sel ? "#ff6b6b" : "#fff");
+    if (sel) { ctx.fillStyle = "#ff6b6b"; ctx.fillRect(22, y + 1, 6, 8); }
+    y += 17;
+  }
+  if (state.treePage === 1) { drawText("(page 2 of 2)", 22, y + 4, "#aaa"); }
+  drawText("> current: " + TREES[state.treeSel].name, 22, H - 40, "#fff");
+}
+
+// ---- title screen menu (clickable + keyboard) ----
+const menuButtons = []; // {x,y,w,h,label,action} rebuilt each frame
+const MENU_UI = { scale: 1, x: 0, y: 0 };
+
+function addMenuBtn(x, y, w, label, action) {
+  menuButtons.push({
+    x: MENU_UI.x + x * MENU_UI.scale,
+    y: MENU_UI.y + y * MENU_UI.scale,
+    w: w * MENU_UI.scale,
+    h: 20 * MENU_UI.scale,
+    label, action
+  });
+}
+
+function handleMenuClick(mx, my) {
+  if (state.started) return;
+  if (state.menu === "title") { startGame(); return; }
+  for (const b of menuButtons) {
+    if (mx >= b.x && mx <= b.x + b.w && my >= b.y - 4 && my <= b.y + b.h + 4) {
+      playSound(cursorEl, 0.5);
+      b.action();
+      return;
+    }
+  }
+}
+
+function resetRoomRun() {
+  state.manGone = false;
+  state.gotEgg = false;
+  state.talked = 0;
+  state.completedRun = false;
+  state.treeSelMode = false;
+  state.moveMode = false;
+  KRIS.x = 320; KRIS.y = 333; KRIS.dir = "u";
+  KRIS.moving = false; KRIS.anim = 0; KRIS.animT = 0;
+  DT.facing = 2; DT.idleLast = true;
+  DT.walktimer = 0; DT.walkbuffer = 0; DT.runtimer = 0;
+  DLG.queue.length = 0; DLG.showing = false; DLG.page = null;
+}
+
+function startGame() {
+  if (state.completedRun) resetRoomRun();
+  state.started = true;
+  musicEl.play().catch(() => {});
+  state.fade = 0; state.fadeTo = 0;
+}
+
+function exitRoomToMenu() {
+  state.started = false;
+  state.completedRun = true;
+  state.menu = "title";
+  state.menuSel = 0;
+  KRIS.moving = false;
+  if (musicEl) { musicEl.pause(); musicEl.currentTime = 0; }
+  for (const key of Object.keys(keys)) keys[key] = false;
+  for (const key of Object.keys(PRESSED)) PRESSED[key] = false;
+}
+
+function tryExitRoom() {
+  if (!state.gotEgg || DLG.showing) return false;
+  const leaving = held("arrowdown") || held("s");
+  const inDoorway = KRIS.x >= FLOOR.vx + 7 &&
+                    KRIS.x <= FLOOR.vx + FLOOR.vw - 7;
+  if (leaving && inDoorway && KRIS.y >= H - 18) {
+    exitRoomToMenu();
+    return true;
+  }
+  return false;
+}
+
+function drawButton(x, y, w, label, highlight) {
+  ctx.fillStyle = highlight ? "#ffffff" : "#222";
+  roundRect(ctx, x, y, w, 22, 5); ctx.fill();
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, w, 22, 5); ctx.stroke();
+  drawText(label, x + 8, y + 5, highlight ? "#000" : "#fff");
+}
+
+function drawTitle() {
+  if (state.started) return;
+  menuButtons.length = 0;
+  const opaque = state.menu === "settings" || settings.menuStyle === 0;
+  if (opaque) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  ctx.save();
+  ctx.translate(MENU_UI.x, MENU_UI.y);
+  ctx.scale(MENU_UI.scale, MENU_UI.scale);
+  if (state.menu === "title") {
+    const blink = (Math.floor(Date.now() / 400) % 2) === 0;
+    if (settings.menuStyle === 0) {
+      // The atlas gives the logo its original fractured/glitched lettering.
+      drawCrackedLogo(22, 60);
+      drawText("Chapter 5 - The Egg Room", 22, 84, "#fff");
+      drawText("A man is waiting behind the tree.", 22, 170, "#fff");
+      if (blink) { drawText("Press Z to begin", 22, 220, "#fff"); }
+      drawText("Press B for settings", 22, 240, "#fff");
+    } else {
+      // Keep the matching room visible; controls sit in the surrounding void.
+      drawText("THE EGG ROOM", 18, 18, "#fff");
+      if (blink) { drawText("Z / ENTER  BEGIN", 18, canvas.height - 38, "#fff"); }
+      drawText("B  SETTINGS", 18, canvas.height - 20, "#888");
+    }
+  } else {
+    drawText("SETTINGS", 22, 46, "#fff");
+    drawText("(before the egg room)", 22, 64, "#aaa");
+    const rows = [
+      { label: "Walk speed",        value: () => settings.walkSpeed.toFixed(1) + " px/f @60",
+        dec: () => { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); },
+        inc: () => { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); } },
+      { label: "Walk code",         value: () => WALK_MODES[settings.walkMode].name,
+        dec: () => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; },
+        inc: () => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; } },
+      { label: "Kris sprite",       value: () => KRIS_SETS[settings.krisSet].name,
+        dec: () => { settings.krisSet = (settings.krisSet + KRIS_SETS.length - 1) % KRIS_SETS.length; },
+        inc: () => { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; } },
+      { label: "The Man",           value: () => settings.manVisible ? "ON" : "OFF",
+        dec: () => { settings.manVisible = !settings.manVisible; },
+        inc: () => { settings.manVisible = !settings.manVisible; } },
+      { label: "Title menu",        value: () => MENU_STYLES[settings.menuStyle],
+        dec: () => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; },
+        inc: () => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; } }
+    ];
+    let y = 100;
+    for (let i = 0; i < rows.length; i++) {
+      const sel = i === state.menuSel;
+      drawText(rows[i].label, 30, y, sel ? "#ff6b6b" : "#fff");
+      if (sel) { ctx.fillStyle = "#ff6b6b"; ctx.fillRect(22, y + 1, 6, 8); }
+      const vw = 190;
+      drawButton(170, y - 2, 26, "<", sel); addMenuBtn(170, y - 2, 26, "<", rows[i].dec);
+      drawText(rows[i].value(), 205, y, "#fff");
+      drawButton(380, y - 2, 26, ">", sel); addMenuBtn(380, y - 2, 26, ">", rows[i].inc);
+      y += 30;
+    }
+    drawText("Walk code: " + WALK_MODES[settings.walkMode].hint, 30, y + 12, "#aaa");
+    drawButton(120, y + 30, 100, "BACK", state.menuSel === 5);
+    addMenuBtn(120, y + 30, 100, "BACK", () => { state.menu = "title"; });
+    drawText("Arrows/WASD + Z/Enter, or click. Esc: back", 22, canvas.height - 30, "#aaa");
+  }
+  ctx.restore();
+}
+
+/* ---------------- main loop ---------------- */
+let raf = null;
+let lastT = 0;
+// Frame-rate normalization. Deltarune is locked to 30fps, so all of its
+// per-frame constants assume a fixed rate. The browser runs this canvas at
+// the display refresh (e.g. 60Hz, 120Hz, 144Hz, 165Hz), so every per-frame
+// value is multiplied by speedScale = actualFrameRate / 60 (1.0 at 60fps)
+// to keep the game feeling identical on any monitor. Design units in the
+// settings are "per frame at 60fps".
+let speedScale = 1;
+function frame(ts) {
+  if (ts > 0) {
+    if (lastT > 0) {
+      speedScale = Math.min(3, Math.max(0.1, ((ts - lastT) / 1000) * 60));
+    } else {
+      speedScale = 1;
+    }
+    lastT = ts;
+  }
+  if (!state.started) { handleMenuKeys(); }
+  document.body.classList.toggle("room-active",
+    state.started || (state.menu === "title" && settings.menuStyle === 1));
+  if (state.started && !state.treeSelMode && !state.moveMode) {
+    handleInteract();
+    if (!tryExitRoom()) {
+      updatePlayer();
+      updateDialogue();
+    }
+  }
+  ctx.save();
+  ctx.scale(RENDER_SCALE, RENDER_SCALE);
+  drawFloor();
+  if (playerBehindTree()) { drawPlayer(); drawTreeAndMan(); }
+  else { drawTreeAndMan(); drawPlayer(); }
+  drawHud();
+  drawTreeSelector();
+  drawMoveMode();
+  drawDialogueBox();
+  ctx.restore();
+  drawTitle();
+  clearPressed();
+  // fade in
+  if (state.fade > 0) {
+    ctx.fillStyle = "rgba(0,0,0," + state.fade + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    state.fade = Math.max(0, state.fade - 0.02 * speedScale);
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+/* ---------------- boot ---------------- */
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("failed to load " + src));
+    im.src = src;
+  });
+}
+
+// cut a sprite region out of a tileset/sheet
+function cropImage(src, rect) {
+  const c = document.createElement("canvas");
+  c.width = rect.w; c.height = rect.h;
+  const cc = c.getContext("2d");
+  cc.drawImage(src, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+  return c;
+}
+
+// per-pixel alpha bitmap for collision (1 byte per pixel)
+function buildCollision(sprite) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = sprite.width; c.height = sprite.height;
+    const cc = c.getContext("2d");
+    cc.drawImage(sprite, 0, 0);
+    if (!cc.getImageData) return null;
+    const id = cc.getImageData(0, 0, c.width, c.height);
+    if (!id || !id.data) return null;
+    const data = new Uint8Array(c.width * c.height);
+    for (let i = 0, j = 3; i < data.length; i++, j += 4) data[i] = id.data[j];
+    return { w: c.width, h: c.height, data };
+  } catch (e) { return null; }
+}
+
+// glyph table from the game's fnt_main (8bitoperator JVE), inlined so the
+// prototype works straight from file:// without fetch()
+const GLYPH_CSV = `32;79;81;3;16;3;0
+33;73;81;4;13;6;1
+34;92;81;5;8;6;0
+35;60;2;7;13;8;0
+36;105;2;6;15;7;0
+37;51;2;7;13;8;0
+38;78;2;7;13;8;0
+39;119;81;2;8;3;0
+40;67;81;4;13;5;0
+41;55;81;4;13;5;0
+42;2;20;8;11;9;0
+43;98;66;6;11;7;0
+44;103;81;2;15;3;0
+45;41;81;6;9;7;0
+46;111;81;2;13;3;0
+47;20;20;6;14;7;0
+48;106;36;6;13;7;0
+49;74;36;6;13;7;0
+50;58;51;6;13;7;0
+51;108;20;6;13;7;0
+52;76;20;6;13;7;0
+53;66;36;6;13;7;0
+54;116;20;6;13;7;0
+55;26;36;6;13;7;0
+56;66;51;6;13;7;0
+57;26;51;6;13;7;0
+58;107;81;2;13;3;0
+59;99;81;2;15;3;0
+60;2;81;5;13;6;0
+61;33;81;6;10;7;0
+62;106;66;5;13;6;0
+63;114;51;6;13;7;0
+64;106;51;6;13;7;0
+65;2;36;6;13;7;0
+66;92;20;6;13;7;0
+67;34;36;6;13;7;0
+68;2;66;6;13;7;0
+69;34;66;6;13;7;0
+70;26;66;6;13;7;0
+71;100;20;6;13;7;0
+72;2;51;6;13;7;0
+73;36;20;6;13;7;0
+74;82;36;6;13;7;0
+75;98;36;6;13;7;0
+76;50;66;6;13;7;0
+77;87;2;7;13;8;0
+78;60;20;6;13;7;0
+79;18;51;6;13;7;0
+80;34;51;6;13;7;0
+81;113;2;6;15;7;0
+82;114;36;6;13;7;0
+83;42;66;6;13;7;0
+84;90;36;6;13;7;0
+85;42;51;6;13;7;0
+86;10;66;6;13;7;0
+87;42;2;7;13;8;0
+88;28;20;6;13;7;0
+89;18;66;6;13;7;0
+90;90;66;6;13;7;0
+91;61;81;4;13;5;0
+92;12;20;6;14;7;0
+93;49;81;4;13;5;0
+94;84;81;6;7;7;0
+95;9;81;4;16;5;0
+96;2;99;3;5;4;0
+97;10;51;6;13;7;0
+98;98;51;6;13;7;0
+99;68;20;6;13;7;0
+100;66;66;6;13;7;0
+101;42;36;6;13;7;0
+102;50;36;6;13;7;0
+103;2;2;6;16;7;0
+104;52;20;6;13;7;0
+105;74;51;6;13;7;0
+106;18;2;6;16;7;0
+107;82;66;6;13;7;0
+108;50;51;6;13;7;0
+109;69;2;7;13;8;0
+110;10;36;6;13;7;0
+111;44;20;6;13;7;0
+112;34;2;6;16;7;0
+113;26;2;6;16;7;0
+114;74;66;6;13;7;0
+115;90;51;6;13;7;0
+116;18;36;6;13;7;0
+117;58;66;6;13;7;0
+118;58;36;6;13;7;0
+119;96;2;7;13;8;0
+120;84;20;6;13;7;0
+121;10;2;6;16;7;0
+122;82;51;6;13;7;0
+123;120;66;5;13;6;0
+124;115;81;2;13;3;0
+125;113;66;5;13;6;0
+126;24;81;7;9;8;0
+127;15;81;7;9;8;0`;
+
+async function boot() {
+  // kris sprite sets
+  for (const set of KRIS_SETS) {
+    const loaded = { d: [], u: [], l: [], r: [] };
+    for (const k of ["d", "u", "l", "r"]) {
+      for (let i = 0; i < 4; i++) {
+        loaded[k].push(await loadImage(set.dir + "/" + k + "_" + i + ".png"));
+      }
+    }
+    krisSets.push(loaded);
+  }
+  img.egg = await loadImage(ASSETS.egg);
+  img.crackedLogo = await loadImage(ASSETS.crackedLogo);
+  for (let i = 0; i < TREES.length; i++) {
+    const raw = await loadImage(TREES[i].file);
+    TREES[i].img = TREES[i].crop ? cropImage(raw, TREES[i].crop) : raw;
+    TREES[i].col = buildCollision(TREES[i].img);
+  }
+  img.font = await loadImage(ASSETS.font);
+  parseFontCsv(GLYPH_CSV);
+  fontAtlasBlack = tintAtlas("#000000");
+  fontAtlasWhite = tintAtlas("#ffffff");
+  fontAtlasRed = tintAtlas("#ff6b6b");
+
+  // audio
+  musicEl = makeEl(ASSETS.music, true);
+  eggSfxEl = makeEl(ASSETS.eggSfx, false);
+  blipEl = makeEl(ASSETS.blip, false);
+  cursorEl = makeEl(ASSETS.cursor, false);
+
+  // Autostarted audio may be blocked until the first real key press.
+  window.addEventListener("keydown", () => {
+    if (state.started && musicEl && musicEl.paused) musicEl.play().catch(() => {});
+  }, { once: true });
+
+  // mouse clicks on the title/settings menu
+  canvas.addEventListener("click", e => {
+    const r = canvas.getBoundingClientRect();
+    const mx = (e.clientX - r.left) * (canvas.width / r.width);
+    const my = (e.clientY - r.top) * (canvas.height / r.height);
+    handleMenuClick(mx, my);
+  });
+
+  // debug: H toggles carrying all eggs
+  // O opens the tree selector; 1-9/0 pick a tree; [ ] page; Esc closes
+  // P opens tree positioning: arrows move it 1px per press, +/- scale, x/y/z shown
+  window.addEventListener("keydown", e => {
+    if (!state.started) return;
+    const k = e.key.toLowerCase();
+    if (k === "h" && !state.treeSelMode && !state.moveMode) {
+      state.haveAlleggs = !state.haveAlleggs;
+      state.dbg = true;
+    }
+    if (k === "o") {
+      if (state.moveMode) state.moveMode = false;
+      state.treeSelMode = !state.treeSelMode;
+      if (state.treeSelMode) state.treePage = 0;
+      return;
+    }
+    if (k === "p") {
+      if (state.treeSelMode) state.treeSelMode = false;
+      state.moveMode = !state.moveMode;
+      return;
+    }
+    if (state.moveMode) {
+      if (k === "escape") { state.moveMode = false; return; }
+      if (k === "arrowleft" || k === "a") { TREE.x -= 1; syncMan(); return; }
+      if (k === "arrowright" || k === "d") { TREE.x += 1; syncMan(); return; }
+      if (k === "arrowup" || k === "w") { TREE.y -= 1; syncMan(); return; }
+      if (k === "arrowdown" || k === "s") { TREE.y += 1; syncMan(); return; }
+      if (k === "+" || k === "=") { TREE.z = Math.min(3, +(TREE.z + 0.05).toFixed(2)); return; }
+      if (k === "-" || k === "_") { TREE.z = Math.max(0.25, +(TREE.z - 0.05).toFixed(2)); return; }
+      return;
+    }
+    if (state.treeSelMode) {
+      if (k === "[" || k === "]") {
+        state.treePage = state.treePage === 0 ? 1 : 0;
+        playSound(cursorEl, 0.5);
+        return;
+      }
+      if (k === "escape") { state.treeSelMode = false; return; }
+      if (k >= "0" && k <= "9") {
+        const num = k === "0" ? 10 : parseInt(k, 10);
+        const idx = state.treePage * 10 + (num - 1);
+        if (idx < TREES.length) {
+          state.treeSel = idx;
+          playSound(cursorEl, 0.5);
+        }
+        return;
+      }
+      return;
+    }
+  });
+
+  // keep the man anchored to the tree
+  function syncMan() {
+    MAN_POS.x = TREE.x + 2;
+    MAN_POS.y = TREE.y - 46;
+  }
+  syncMan();
+
+  startGame();
+  frame();
+}
+
+boot().catch(err => {
+  ctx.fillStyle = "#fff";
+  ctx.font = "16px monospace";
+  ctx.fillText("Failed to load: " + err.message, 20, 40);
+  ctx.fillText("Run index.html from a local folder (not file:// restrictions).", 20, 64);
+});
+</script>
+</body>
+</html>
