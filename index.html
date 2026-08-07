@@ -195,7 +195,6 @@ function startDialogue() { DLG.showing = true; dMake(); }
 function manInteract() {
   if (state.talked === 0) {
     pushPage("* (Well^1, there is a man here.)/");
-    pushPage("* (He offers you something.)/");
     pushChoice("* (He offers you something.)/", ["Yes", "No"], () => {
       if (DLG.choice === 0) {
         state.gotEgg = true;
