@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -39,6 +39,34 @@ const ASSETS = {
   cursor:  "assets/cursor.wav"
 };
 
+// Chapter 5's real Dark World textbox pieces and choice cursor, embedded from
+// the decompiled game assets so this single-file prototype stays portable.
+const DARKBOX_ASSETS = {
+  top: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAQCAYAAADXnxW3AAAAI0lEQVQI12NwcPjPwMTAwIBEMPz///8/hDtv8VGICJoSnAQA5xoIm0HpxWAAAAAASUVORK5CYII=",
+  left: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAABCAYAAADXeS5fAAAAIUlEQVQI12N0cPjPgAz272f4z8DAwDBv8VGG5DgbBkIAAENIBwFpkGobAAAAAElFTkSuQmCC",
+  heart: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQklEQVQY052OQQ7AMAjD7P3/z+llRROjOywXRDBRBAgEQPDeawia8krSvIu3+tMI8QvaRfMB6KNIJqCSJtB24wRuLcbxEAeaqec6AAAAAElFTkSuQmCC",
+  corners: [
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAtElEQVQ4y6WSSw6EIBBEqydzK13QB8EFnksXehA3eK6azWCwFSSxEqKg/aj+iHNETdsGqkJK3z9okA87XwFqkG/Jdr4PvsO87mgGqEISJA+04EsK+Q+qEFVI8F01tYuDVPW76t+m4RyPxb/ys2mJBED7TEtI0t6SbNsbg+8gch4JcY5Hi2y1x6EHAExLPN6tJE1ibVhKwSeA7cS87hiHHiQvtotttJqWWA1+BNSsNwFa9BrwA8KwaRp1iDVNAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwElEQVQ4y6WSvQ2DMBCF30VZIrNA4RvEFKbLQOmggEFoYJaM8dLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtWfy5svfRyq/zMN57gvfpWeDdNKALTPuIQk7S3Rtr0x+AYix5EQ57i3yFa771oAwDCt+7uVxEksDUsu+ACwnRjnDX3XguTJdraNVsO0FoP/AkrWqwA1ugz4ADAlahr76VlbAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAv0lEQVQ4y6WSvQ2DMBCF30XZCgpfnxVMYTbIINkAClghPQ3M9dLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtUfL/D9PFb/ZxrOcV/8Kj0bppUAaJ9xCUnaW6Jte2PwDUSOIyHOcW+RrXbftQCAYVr3dyuJk1gallzwAWA7Mc4b+q4FyZPtbButhmktBv8FlKxXAWp0GfABwCBpGlRVjaIAAAAASUVORK5CYII=",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAv0lEQVQ4y6WSvQ2DMBCF30VZKDUUvhEygCnMXFDAABmBBuqM9NLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtUfT/D9Olb/ZxrOcV/8Kj0bppUAaJ9xCUnaW6Jte2PwDUSOIyHOcW+RrXbftQCAYVr3dyuJk1gallzwAWA7Mc4b+q4FyZPtbButhmktBv8FlKxXAWp0GfABvsBpGpE/GoEAAAAASUVORK5CYII=",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAtElEQVQ4y6WSwQ3DMAhFP1EX6DzuwQziHty5mkMySC71PN2g9ERkk5paClIUWwmPzweKUeDFtkGYQb3vEwYi5SKnAB7k0pNd33MKmNeCYQAzSCF1ogUfWqh/YAYxg3IKbmsHBer69QN5T637v9romqjJ81rwuN8AoHnrQyIitorKthVzCiBqV4JilH1E1m2t+Fxe+9kG6SZ6y9JLbgB2Etq7iBxkD5mo0r3kvwBP+hBgJE4DvmXiUhKF+A6iAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAv0lEQVQ4y6WSvQ2DMBCF30VZKDUUvhEygCnMXFDAABmBBuqM9NLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtUfT/D9Olb/ZxrOcV/8Kj0bppUAaJ9xCUnaW6Jte2PwDUSOIyHOcW+RrXbftQCAYVr3dyuJk1gallzwAWA7Mc4b+q4FyZPtbButhmktBv8FlKxXAWp0GfABvsBpGpE/GoEAAAAASUVORK5CYII=",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAv0lEQVQ4y6WSvQ2DMBCF30XZCgpfnxVMYTbIINkAClghPQ3M9dLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtUfL/D9PFb/ZxrOcV/8Kj0bppUAaJ9xCUnaW6Jte2PwDUSOIyHOcW+RrXbftQCAYVr3dyuJk1gallzwAWA7Mc4b+q4FyZPtbButhmktBv8FlKxXAWp0GfABwCBpGlRVjaIAAAAASUVORK5CYII=",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwElEQVQ4y6WSvQ2DMBCF30VZIrNA4RvEFKbLQOmggEFoYJaM8dLEyByxY4knWWDDfX73I84RJS0LqArJfb+hQj5svAQoQe452+k++AbjvKEaoAqJkDTQgk8ppD+oQlQhwTfF1E4OYtWfy5svfRyq/zMN57gvfpWeDdNKALTPuIQk7S3Rtr0x+AYix5EQ57i3yFa771oAwDCt+7uVxEksDUsu+ACwnRjnDX3XguTJdraNVsO0FoP/AkrWqwA1ugz4ADAlahr76VlbAAAAAElFTkSuQmCC"
+  ]
+};
+
+// Chapter 1's actual Block Tree layers. obj_blocktree_bg draws frames 1, 2
+// and 3 independently so the two leafy layers can sway out of phase. The
+// tiny block is the real recurring falling-leaf sprite.
+const BLOCKTREE_ASSETS = {
+  trunk: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAABbCAYAAABwMKucAAACy0lEQVR42u2cQW7kIBBFi1EOwmxyjAjNSbzKOThHVn2SCM0xZjPcxLMJLdoDbezYwMf/bdLCbkL8VEUBVtTH/FtI3/xoPQCyDiUBQEkAUBIAlAQAJQFASQBQEgCUBAAlAUBJAFASAJQEACUBQEkAUBIAlAQAJQFASQBQEgCUBAAlAUBJAFASAJQEACUBQEkAUBIAlAQAJQFASQBQEgCUBAAlAUBJAFASAJQEACUBQEkAUBIAlAQAJQFASQC8tB4AyfMubyLCSIKAkgAYJt29qs+59N4/8y/VerxbGELSq/qcJ+2K778pmZFEwae7rYJERCbtNkVea+AlXQFKAoCSABiicEAiLFC38LLnS3v4EP7X5L0w3QFASQBQUkX2Ti3VCod3eRtyXqoxp1et7kr/oBFlfgemOwC6lFRrWYAyzm4Xs7kHcGQqfPaQ9U+zugGrxSTb/V936A57t5LQsN6I/vpsxB3aNyUluCk728Xxh/VG4rabNw/XzWxPO5+ipAQ60x6LOVPKEkoqREtdMTFwko5cFDtlk8XB1pPes1ECc4icxim7+fh8KzdvmkWRSKfrJPIIXLqrRasiIcXlJC1L5xytxcRcTpJIXwJK4JwEALQkp+zsWw+iAl2nu9w6JtDbeuYsupQU5FxFwhrdpbuQws4QZAsru97oTpKIiD0pgrTgVXYinaa7IwnRo1sP5BtASNJixBccpMUHb0sQIyjQvaRSQWEnAVlGji7npL2MKEgEQNLk89dyL4KMRleSSs6GYjHPBI5EV5ICzyLkKmJimhcO8dZPiKLJi1idvl9nPk/a3fsabW6qLmm5Hxent7CmiRez+klfk3b3qm7S7t5X/DtGENYkkqbEO20i/+80pA7ogph71H39jO+N+x9BWNUXUeLCYClgrT0Q7yDkioxYYuq7D/0DiGsSSbmHmGsP19YIErw8CgkRiiAkxT/eRsijv8oXDwAAAABJRU5ErkJggg==",
+  leavesBack: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAABbCAYAAABwMKucAAACSElEQVR42u2c3XHDIBAGkcfvaUFFuIwUkQ7UgltwBy4iZaQIWkgFzktmEns8lvjRcR/svoOAFdyBGE3hFobnEr6K61jCabf2HSwHwyM1BNWs5xnDS1IASQIgSQAkCYAkAZBUiT1T8GPrztWmZiq858Cn0NVM6lFQCMYzyfvO3itmM0lhZ++Vrpa7mnh6GSarA9banX5c9jwN6lpbU5GVpEaJKNPE4W367PbDyPftfdqrbrOY1LOgvftH4iAAkgQojknX6dz1MuaBopmEIBtY7gRAkgBIEgBJRpScuHT30c8zOaKWcGImeecSvpCkAJIEICZVJOWQNeXUnJnUiBShxxDWs47ePzN454Ag/7DcCYAkAZAkQHYKPmeUia17K8oh56rRnPmw3HKjs3rv7tnX17nggbF1jx2xdUPr5sRhLiwfW3dgR1wkDrOTOrziQhK8JktSzHxYbrnRyY5JsXXLB2EJJz+JA9zzf2tETBIASQIgSQAXkqKTOrziJnGIrRtgzKsjocfzVDeSRuHjdv6Vc95cxsVyB69BkgCrkv6mJ7RiU0yqISrlsjo3lO5huRMASQIgyZDcsGH2b6EQtsclpZhkkViZbma33ky6Jmz0RoDlTgCXklT2ZlbtNI1JNSj9b94yNfqHa8E4u5xJe9FMUCFDSVIFSQIgSQA5SSP+vN1vdieRhCdQMM5lknobSKfILXcjgiQBkCQAkgRAkgBIEgBJAiBJACQJgCQBkCQAkgRAkgBIEgBJAiBJACQJgCQBkCQAkgRAkgA/3OJnjf6is64AAAAASUVORK5CYII=",
+  leavesFront: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGkAAABbCAYAAABwMKucAAACnklEQVR42u2cwW3DMAxFqSCDOBP00gE8QICM0ksHyAC9dJQCHcAD9JIJ7E3cQ2GgMRzHtiSaX/zvGsB29EKKohQH6cU93amOHoWqbUKu5zvoDoc9UghKeZ0p3EtCgJIAoCQAKAkASgLAvaSuq5NcJ2cJHkpbJ6UshXMO/BqKiqQSBYmIHDVvZn1lbxW1SEJY2VulrHSXqAgQsfVjUCscUn7prqul7q93aa8J18nrV1Wj8wVniE3RkJIQiRFVVLorFUoCgJIA0CvBE1Ze3ohezH7Kz+znl9P7X8GwY5W15QdioSociIqkxYJ2ZGsEW4p8zkkAUBIAlKRAbOpU7YJ7YiymCdd+3MpaCiVlYqo63NIaq9omFJ/utpbSVkrw7lT3LiLJyoBvpfhIKoGskr7aD3db3TmI2k961nGI4SV8zz4ZegpbQ5A+zYacRtRYaDPtwSHVjqnXAdSAhQMAlAQAJQFASQAcUh3b5ZooH0eR+TNhOddCZBlMdwBQEgAuuuDaxO7EjltejKTEpDhlNL4GJRmnapvAdBfJeOnxrHu/lP8VNyMpAq21ISUBACPJ81aI6pzkeaBjUIskL4Ju/Tl6nhofooSv7oY1hdaZh+F+czLmPnuT19X3hJc0DMhNzns/SjZgCocpvGyPPJW0JTxJWhaluxSiLlLv/V1hgU53XqAkAChJka3ThuqbI/d+v1COalCjsDL5es9Hh19SdC0QyvaxeKh0hzDAOTApiWuze8y2hR6J8rjeMhlJ5B5KAoCSAKAkAOAkxfwLBLWEN1vdzfFflId/fcBFkkcoCQBKAmD1nORhDrAGIwkASgKAkgCgJAAoCQBKAoCSAIDs3eXC6rY9IwkASgKAkgCgJAAoCQBKAoCSAKAkACgJAEoC4BcayrbccPaSFwAAAABJRU5ErkJggg==",
+  fallingBlock: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAKCAYAAAC9vt6cAAAAM0lEQVQoz2N8oODAwMDA8J+BDLDxfg8j4wMFB7I0wwATJZpHDRg0BijcP8BIruaN93sYAS+lCotpXwuCAAAAAElFTkSuQmCC"
+};
+
 // selectable Kris overworld sprite sets (all decompiled from chapter5)
 const KRIS_SETS = [
   { name: "Kris (main)",         dir: "assets/kris/main" },
@@ -56,7 +84,8 @@ const settings = {
   krisSet: 1,        // dark-world Kris matches the reference scene
   manVisible: false, // the man stays concealed behind the tree
   walkMode: 1,       // 0 = Classic (prototype 8-way), 1 = Deltarune (obj_mainchara port)
-  menuStyle: 0       // 0 = cracked classic title, 1 = room preview title
+  menuStyle: 0,      // 0 = cracked classic title, 1 = room preview title
+  dialogSize: 0      // 0 = Deltarune's native 592x166 final-pixel box
 };
 
 // walk-code choices shown in the settings menu
@@ -66,6 +95,11 @@ const WALK_MODES = [
 ];
 
 const MENU_STYLES = ["Classic", "Room preview"];
+const DIALOG_SIZES = [
+  { name: "Original", scale: 0.75 },
+  { name: "Large", scale: 0.875 },
+  { name: "Extra large", scale: 1 }
+];
 const SETTINGS_STORAGE_KEY = "eggroom.settings.v1";
 
 function loadSettings() {
@@ -83,6 +117,9 @@ function loadSettings() {
     }
     if (Number.isInteger(saved.menuStyle)) {
       settings.menuStyle = Math.max(0, Math.min(MENU_STYLES.length - 1, saved.menuStyle));
+    }
+    if (Number.isInteger(saved.dialogSize)) {
+      settings.dialogSize = Math.max(0, Math.min(DIALOG_SIZES.length - 1, saved.dialogSize));
     }
   } catch (_) {
     // Storage may be unavailable or contain old/corrupt data; defaults are safe.
@@ -105,7 +142,9 @@ const TREES = [
   { name: "spr_candytree (ch1)",          file: "assets/trees/1.png" },
   { name: "spr_candytree_tall (ch1)",     file: "assets/trees/2.png" },
   { name: "spr_donation_hole_and_tree (ch1)", file: "assets/trees/3.png" },
-  { name: "treetiles_new - FULL TREE (ch1)", file: "assets/trees/4.png", crop: { x: 212, y: 0, w: 216, h: 186 }, flipX: true, trunkCollision: true },
+  // trunkTop: sprite row of the layer line (the yellow line) - Kris is drawn
+  // behind the tree above it, in front below it. Tune with [I] + arrows.
+  { name: "treetiles_new - FULL TREE (ch1)", file: "assets/trees/4.png", crop: { x: 212, y: 0, w: 216, h: 186 }, flipX: true, trunkCollision: true, trunkTop: 185 },
   { name: "treetiles_new - bush L (ch1)",    file: "assets/trees/4.png", crop: { x: 0, y: 191, w: 141, h: 133 } },
   { name: "treetiles_new - bush R (ch1)",    file: "assets/trees/4.png", crop: { x: 141, y: 191, w: 180, h: 133 } },
   { name: "spr_pinktree (ch5)",           file: "assets/trees/8.png" },
@@ -124,15 +163,16 @@ const TREES = [
 const img = {};          // loaded images
 const krisSets = [];     // per KRIS_SETS entry: {d:[...], u:[...], l:[...], r:[...]}
 const treeCol = [];      // per-tree collision alpha bitmaps {w,h,data}
-let fontAtlasBlack = null, fontAtlasWhite = null, fontAtlasGray = null, fontAtlasRed = null;  // tinted atlases (source glyphs are white)
+let fontAtlasBlack = null, fontAtlasWhite = null, fontAtlasGray = null;
+let fontAtlasRed = null, fontAtlasYellow = null;  // tinted atlases (source glyphs are white)
 const glyphs = {};       // charCode -> {sx,sy,w,h,shift,offset}
 let musicEl, eggSfxEl, blipEl, cursorEl;
 
 const KRIS = { x: 320, y: 333, dir: "u", moving: false, anim: 0, animT: 0 };
 // The man has no sprite: in the game he is built from spr_pxwhite (a 1x1 white
 // pixel) stretched into a white silhouette. We draw that silhouette directly.
-// MAN_POS is kept in sync with the tree (moveable with P + arrows).
-const MAN_POS = { x: 340, y: 154 };          // feet position, just behind the tree trunk
+// MAN_POS is a fixed spot (move it with [I] -> "man" shape).
+const MAN_POS = { x: 326, y: 186 };          // feet position, just behind the tree trunk
 const TREE = { x: 340, y: 200, z: 0.75 };    // base of the tree (position editable with P)
 // The reference room has three clean stepped widths rather than a plain T.
 const FLOOR = {
@@ -142,6 +182,19 @@ const FLOOR = {
   vx: 294, vy: 243, vw: 60, vh: 117      // narrow approach
 };
 const TREE_R = 20;                           // trunk collision radius
+
+// [I] collision debug editor shapes (see drawCollisionDebug)
+const COLLBOX = { x: 298, y: 185, w: 64, h: 24 };  // solid collision box (green); tune with arrows
+const KRIS_OFF = { x: 0, y: 0 };                  // Kris collision-point offset from his feet
+let MAN_W = 16, MAN_H = 46;                       // blue man box (debug view)
+const DEBUG_SHAPES = ["box", "trunkTop", "kris", "man"];
+let debugSel = null;                          // selected shape: null | box | trunkTop | kris | man
+const COL_TRACE = { box: false, tree: false, behind: false, nearMan: false };
+function colLog(msg) { if (typeof console !== "undefined") console.log("[col] " + msg); }
+
+// Ported timing from chapter1 obj_blocktree_bg. Values advance in 30fps game
+// frames; dt30 converts the browser's refresh-rate-normalized 60fps loop.
+const TREE_FX = { siner: 0, blocktimer: 0, block: null };
 
 const state = {
   started: false,
@@ -155,6 +208,7 @@ const state = {
   treeSelMode: false,  // O-key selector open
   treePage: 0,         // selector page (0 = 1-10, 1 = 11-16)
   moveMode: false,     // P-key tree positioning mode
+  colDbg: false,       // I-key collision debug overlay
   menu: "title",       // title screen menu: "title" | "settings"
   menuSel: 0,          // selected row in the settings menu
   completedRun: false  // set after leaving with the Egg; next start resets the room
@@ -163,12 +217,17 @@ const state = {
 /* ---------------- dialogue engine ---------------- */
 const DLG = {
   queue: [],       // {text, choices, blip, onDone, slow}
-  idx: 0, pos: 0,  // current page index, char position
+  idx: 0, pos: 0,  // current page index, source char position
   showing: false,
   typing: true,
   choice: -1,      // -1 = no choice on this page
-  choiceSel: 0,
-  timer: 0,        // pause timer for ^1
+  choiceSel: -1,     // official choicer begins with the SOUL between the options
+  heartX: 312,
+  heartY: H - 94,
+  alarm: 0,        // typing alarm in 30fps game frames (obj_writer/Alarm_0.gml port)
+  rate: 1,         // characters per 30fps frame (Deltarune's rate=1; slow pages use 2)
+  soundTimer: 0,   // blip throttle: scr_textsound plays every other character
+  layout: null,    // fixed pre-wrapped page layout (never reflows while typing)
   page: null,
   onDone: null
 };
@@ -191,12 +250,16 @@ function dMake() {   // open next queued page
   if (DLG.queue.length === 0) { return; }
   const p = DLG.queue.shift();
   DLG.page = p;
-  DLG.pos = 0;
   DLG.typing = true;
   DLG.choice = -1;
-  DLG.choiceSel = 0;
-  DLG.timer = 0;
-  DLG.pause = 0;
+  DLG.choiceSel = -1;
+  DLG.heartX = 312;
+  DLG.heartY = H - 94;
+  DLG.rate = p.slow ? 2 : 1;   // Deltarune rate: 1 char per 30fps game frame
+  DLG.alarm = DLG.rate;
+  DLG.soundTimer = 0;
+  DLG.pos = 1;                 // the first character appears together with the box
+  DLG.layout = pageLayout(p.text);
   DLG.showing = true;
   DLG.onDone = p.onDone;
 }
@@ -227,12 +290,13 @@ function startDialogue() { DLG.showing = true; dMake(); }
 function manInteract() {
   if (state.talked === 0) {
     pushPage("* (Well^1, there is a man here.)/");
-    pushChoice("* (He offers you something.)/", ["Yes", "No"], () => {
+    pushPage("* (He offers you something.)/");
+    pushChoice("", ["Yes", "No"], () => {
       if (DLG.choice === 0) {
         state.gotEgg = true;
         playSound(eggSfxEl);
         pushPage("* (You received the \"Egg\".)/");
-        pushChoice("* (Ask for more^1, or leave?)/", ["Ask for more", "Do Not"], () => {
+        pushChoice("", ["Ask for more", "Do Not"], () => {
           if (state.haveAlleggs) {
             pushPage("* (Well^1, the man put his hand softly on your shoulder.)/");
             pushPage("* (And^1, showing you his empty palm...)/");
@@ -263,7 +327,7 @@ function manInteract() {
           state.manGone = true;
         });
       } else {
-        pushPage("* (Then he needn't be here.)/");
+        pushPage("* (Well^1, there is not a man here.)/");
       }
     });
   } else if (state.talked === 1) {
@@ -282,8 +346,8 @@ function manInteract() {
 }
 
 function treeInteract() {
-  if (state.manGone) { pushPage("* (It is a tree.)/"); }
-  else { pushPage("* (He is behind the tree.)/"); }
+  // obj_room_man replaces the original line once the man has gone.
+  pushPage(state.manGone ? "* (It is a tree.)/" : "* (He is behind the tree.)/");
 }
 
 /* ---------------- input ---------------- */
@@ -291,6 +355,8 @@ const keys = {};
 const PRESSED = {};
 window.addEventListener("keydown", e => {
   if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+  // while the debug shape editor has a shape selected, arrows belong to it
+  if (state.colDbg && debugSel !== null && e.key.indexOf("Arrow") === 0) return;
   if (!e.repeat) PRESSED[e.key.toLowerCase()] = true;
   keys[e.key.toLowerCase()] = true;
 });
@@ -307,8 +373,8 @@ function handleMenuKeys() {
     return;
   }
   // settings menu
-  if (k === "arrowup" || k === "w") { state.menuSel = (state.menuSel + 5) % 6; playSound(cursorEl, 0.5); }
-  else if (k === "arrowdown" || k === "s") { state.menuSel = (state.menuSel + 1) % 6; playSound(cursorEl, 0.5); }
+  if (k === "arrowup" || k === "w") { state.menuSel = (state.menuSel + 6) % 7; playSound(cursorEl, 0.5); }
+  else if (k === "arrowdown" || k === "s") { state.menuSel = (state.menuSel + 1) % 7; playSound(cursorEl, 0.5); }
   else if (state.menuSel === 0 && (k === "arrowleft" || k === "a")) { updateSetting(() => { settings.walkSpeed = Math.max(0.5, +(settings.walkSpeed - 0.1).toFixed(1)); }); playSound(cursorEl, 0.5); }
   else if (state.menuSel === 0 && (k === "arrowright" || k === "d")) { updateSetting(() => { settings.walkSpeed = Math.min(4, +(settings.walkSpeed + 0.1).toFixed(1)); }); playSound(cursorEl, 0.5); }
   else if (state.menuSel === 1 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.walkMode = (settings.walkMode + 1) % WALK_MODES.length; }); playSound(cursorEl, 0.5); }
@@ -316,7 +382,9 @@ function handleMenuKeys() {
   else if (state.menuSel === 2 && (k === "arrowright" || k === "d")) { updateSetting(() => { settings.krisSet = (settings.krisSet + 1) % KRIS_SETS.length; }); playSound(cursorEl, 0.5); }
   else if (state.menuSel === 3 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.manVisible = !settings.manVisible; }); playSound(cursorEl, 0.5); }
   else if (state.menuSel === 4 && (k === "arrowleft" || k === "a" || k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }); playSound(cursorEl, 0.5); }
-  else if (k === "escape" || k === "backspace" || (state.menuSel === 5 && (k === "z" || k === "enter" || k === " "))) { state.menu = "title"; playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 5 && (k === "arrowleft" || k === "a")) { updateSetting(() => { settings.dialogSize = (settings.dialogSize + DIALOG_SIZES.length - 1) % DIALOG_SIZES.length; }); playSound(cursorEl, 0.5); }
+  else if (state.menuSel === 5 && (k === "arrowright" || k === "d" || k === "z" || k === "enter" || k === " ")) { updateSetting(() => { settings.dialogSize = (settings.dialogSize + 1) % DIALOG_SIZES.length; }); playSound(cursorEl, 0.5); }
+  else if (k === "escape" || k === "backspace" || (state.menuSel === 6 && (k === "z" || k === "enter" || k === " "))) { state.menu = "title"; playSound(cursorEl, 0.5); }
 }
 
 function pressedAnyKey() {
@@ -391,23 +459,34 @@ function textWidth(str) {
   return w;
 }
 
-function drawText(str, x, y, color = "#000") {
+function atlasForColor(color) {
   let atlas;
   if (color === "#fff" || color === "#ffffff") atlas = fontAtlasWhite;
+  else if (color === "#ffff00") atlas = fontAtlasYellow;
   else if (color === "#ff6b6b") atlas = fontAtlasRed;
   else if (color === "#aaa" || color === "#888") atlas = fontAtlasGray;
   else atlas = fontAtlasBlack;
+  return atlas;
+}
+
+function drawTextScaled(str, x, y, color = "#000", scale = 1) {
+  const atlas = atlasForColor(color);
   if (!atlas) return;
   let cx = x;
   for (const ch of str) {
     if (ch === "\n") { continue; }
     const g = glyphs[ch.charCodeAt(0)];
-    if (!g) { cx += 7; continue; }
+    if (!g) { cx += 7 * scale; continue; }
     if (g.w > 0 && g.h > 0) {
-      ctx.drawImage(atlas, g.sx, g.sy, g.w, g.h, cx, y + g.offset, g.w, g.h);
+      ctx.drawImage(atlas, g.sx, g.sy, g.w, g.h,
+                    cx, y + g.offset * scale, g.w * scale, g.h * scale);
     }
-    cx += g.shift;
+    cx += g.shift * scale;
   }
+}
+
+function drawText(str, x, y, color = "#000") {
+  drawTextScaled(str, x, y, color, 1);
 }
 
 function drawCrackedLogo(x, y) {
@@ -433,19 +512,20 @@ function floorContains(x, y) {
          inside(FLOOR.vx, FLOOR.vy, FLOOR.vw, FLOOR.vh);
 }
 
-// per-pixel collision against the current tree's alpha bitmap
+function pointInBox(x, y, box) {
+  return x > box.x && x < box.x + box.w &&
+         y > box.y && y < box.y + box.h;
+}
+
+// The room tree uses a dedicated trunk/root solid. Its animated leaves are
+// visual scenery, not collision geometry; keeping them out of this test lets
+// Kris pass behind the canopy and circle the trunk without invisible snags.
 function roomCollides(x, y) {
   const t = TREES[state.treeSel];
   if (t && t.trunkCollision) {
-    // Only the trunk and roots are solid. The canopy must stay passable so
-    // Kris can circle around either side and reach the man behind the tree.
-    const trunkX = TREE.x - 6;
-    const inTrunk = Math.abs(x - trunkX) < 13 &&
-                    y > TREE.y - 48 && y < TREE.y + 2;
-    const rootDx = (x - (TREE.x - 8)) / 29;
-    const rootDy = (y - (TREE.y - 1)) / 11;
-    const inRoots = rootDx * rootDx + rootDy * rootDy < 1;
-    return inTrunk || inRoots;
+    // The hidden man remains a directional interaction trigger, but is not a
+    // second movement wall. The previous tall man solid crossed the rear path.
+    return pointInBox(x, y, COLLBOX);
   }
   if (t && t.img && t.col) {
     const z = TREE.z;
@@ -485,6 +565,15 @@ function updatePlayer() {
   else { updatePlayerClassic(); }
 }
 
+// Kris can walk on every tile in the room, including the black ones: in the
+// original egg room the whole floor is open and only the room's edges bound
+// movement. The tree's trunk/root solid (roomCollides) and the screen-edge
+// clamps in the movement code still block him.
+function kCollides(x, y) {
+  const px = x + KRIS_OFF.x, py = y + KRIS_OFF.y;
+  return roomCollides(px, py);
+}
+
 function updatePlayerClassic() {
   if (DLG.showing) { KRIS.moving = false; return; }
   let mx = 0, my = 0;
@@ -498,8 +587,8 @@ function updatePlayerClassic() {
     KRIS.dir = my < 0 ? "u" : my > 0 ? "d" : mx < 0 ? "l" : "r";
     const s = settings.walkSpeed * speedScale;
     const nx = KRIS.x + mx * s, ny = KRIS.y + my * s;
-    if (!roomCollides(nx, KRIS.y)) KRIS.x = nx;
-    if (!roomCollides(KRIS.x, ny)) KRIS.y = ny;
+    if (!kCollides(nx, KRIS.y)) KRIS.x = nx;
+    if (!kCollides(KRIS.x, ny)) KRIS.y = ny;
     KRIS.x = Math.max(16, Math.min(W - 16, KRIS.x));
     KRIS.y = Math.max(24, Math.min(H - 16, KRIS.y));
     KRIS.animT += speedScale;
@@ -566,35 +655,35 @@ function updatePlayerDT() {
   let xmeet = 0, ymeet = 0, xymeet = 0;
   let bkx = 0, bky = 0, bkxy = 0;
 
-  if (roomCollides(KRIS.x + px, KRIS.y + py)) { xymeet = 1; }
+  if (kCollides(KRIS.x + px, KRIS.y + py)) { xymeet = 1; }
   // X axis: slide vertically along the wall, then snap px to a free spot
-  if (roomCollides(KRIS.x + px, KRIS.y)) {
+  if (kCollides(KRIS.x + px, KRIS.y)) {
     xmeet = 1; bkx = 0;
     for (let g = wspeed; g > 0; g -= 1) {
-      if (press_d === 0 && !roomCollides(KRIS.x + px, KRIS.y - g)) { KRIS.y -= g; py = 0; break; }
-      if (press_u === 0 && !roomCollides(KRIS.x + px, KRIS.y + g)) { KRIS.y += g; py = 0; break; }
+      if (press_d === 0 && !kCollides(KRIS.x + px, KRIS.y - g)) { KRIS.y -= g; py = 0; break; }
+      if (press_u === 0 && !kCollides(KRIS.x + px, KRIS.y + g)) { KRIS.y += g; py = 0; break; }
     }
-    if (px > 0) { for (let i = px; i >= 0; i -= 1) { if (!roomCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
-    if (px < 0) { for (let i = px; i <= 0; i += 1) { if (!roomCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
+    if (px > 0) { for (let i = px; i >= 0; i -= 1) { if (!kCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
+    if (px < 0) { for (let i = px; i <= 0; i += 1) { if (!kCollides(KRIS.x + i, KRIS.y)) { px = i; bkx = 1; break; } } }
     if (bkx === 0) { px = 0; }
   }
   // Y axis: slide horizontally along the wall, then snap py to a free spot
-  if (roomCollides(KRIS.x, KRIS.y + py)) {
+  if (kCollides(KRIS.x, KRIS.y + py)) {
     ymeet = 1; bky = 0;
     for (let g = wspeed; g > 0; g -= 1) {
-      if (press_r === 0 && !roomCollides(KRIS.x - g, KRIS.y + py)) { KRIS.x -= g; px = 0; break; }
-      if (press_l === 0 && !roomCollides(KRIS.x + g, KRIS.y + py)) { KRIS.x += g; px = 0; break; }
+      if (press_r === 0 && !kCollides(KRIS.x - g, KRIS.y + py)) { KRIS.x -= g; px = 0; break; }
+      if (press_l === 0 && !kCollides(KRIS.x + g, KRIS.y + py)) { KRIS.x += g; px = 0; break; }
     }
-    if (py > 0) { for (let i = py; i >= 0; i -= 1) { if (!roomCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
-    if (py < 0) { for (let i = py; i <= 0; i += 1) { if (!roomCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
+    if (py > 0) { for (let i = py; i >= 0; i -= 1) { if (!kCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
+    if (py < 0) { for (let i = py; i <= 0; i += 1) { if (!kCollides(KRIS.x, KRIS.y + i)) { py = i; bky = 1; break; } } }
     if (bky === 0) { py = 0; }
   }
   // diagonal corner resolution: shrink the displacement toward (0,0)
-  if (roomCollides(KRIS.x + px, KRIS.y + py)) {
+  if (kCollides(KRIS.x + px, KRIS.y + py)) {
     xymeet = 1; bkxy = 0;
     let i = px, j = py;
     while (j !== 0 || i !== 0) {
-      if (!roomCollides(KRIS.x + i, KRIS.y + j)) { px = i; py = j; bkxy = 1; break; }
+      if (!kCollides(KRIS.x + i, KRIS.y + j)) { px = i; py = j; bkxy = 1; break; }
       if (Math.abs(j) >= 1) { j = j > 0 ? j - 1 : j + 1; } else { j = 0; }
       if (Math.abs(i) >= 1) { i = i > 0 ? i - 1 : i + 1; } else { i = 0; }
     }
@@ -641,68 +730,128 @@ function updatePlayerDT() {
   KRIS.moving = walk === 1;
 }
 
+function facingToward(x, y) {
+  const dx = x - KRIS.x, dy = y - KRIS.y;
+  if (KRIS.dir === "u") return dy < 0 && Math.abs(dx) < 52;
+  if (KRIS.dir === "d") return dy > 0 && Math.abs(dx) < 52;
+  if (KRIS.dir === "l") return dx < 0 && Math.abs(dy) < 52;
+  return dx > 0 && Math.abs(dy) < 52;
+}
+
 function nearMan() {
+  if (state.manGone) return false; // after he leaves, the tree gets its own dialogue
+  // The man is behind the tree: he can only be talked to from beside/behind
+  // it (above the green box's level), while facing his trigger. This mirrors
+  // obj_mainchara's direction-specific collision rectangles.
+  if (KRIS.y >= COLLBOX.y + COLLBOX.h - 8) return false;
   const dx = KRIS.x - MAN_POS.x, dy = KRIS.y - MAN_POS.y;
-  // Generous enough to talk from either side or just in front of the roots.
-  return dx * dx + dy * dy < 62 * 62;
+  return dx * dx + dy * dy < 62 * 62 && facingToward(MAN_POS.x, MAN_POS.y - MAN_H / 3);
 }
 function nearTreeBack() {
-  // behind the tree (walk up past the trunk)
-  return KRIS.x > TREE.x - 48 && KRIS.x < TREE.x + 48 &&
-         KRIS.y > TREE.y - 108 && KRIS.y < TREE.y - 40;
+  // In front of the tree: the band below the green collision box, across the
+  // tree's width (box is tunable in the [I] editor; this zone follows it).
+  return KRIS.dir === "u" &&
+         KRIS.x > COLLBOX.x - 10 && KRIS.x < COLLBOX.x + COLLBOX.w + 10 &&
+         KRIS.y > COLLBOX.y + COLLBOX.h - 10 && KRIS.y < COLLBOX.y + COLLBOX.h + 12;
 }
 
 function handleInteract() {
-  if (DLG.showing) {
-    if (!(DLG.page.choices && DLG.choice === -1)) {
-      // only advance on an actual keypress (not every frame)
-      if (anyKey(["z", "enter", " "])) { dDone(); }
-    }
-    return;
-  }
-  if (!anyKey(["z", "enter", " "])) return;
-  if (nearMan()) { manInteract(); startDialogue(); }
-  else if (nearTreeBack()) { treeInteract(); startDialogue(); }
+  if (DLG.showing || !anyKey(["z", "enter", " "])) return false;
+  // In front of the tree this is a tree; the man is only talked to from
+  // beside/behind it, so the tree zone gets priority.
+  if (nearTreeBack()) { treeInteract(); startDialogue(); return true; }
+  if (nearMan()) { manInteract(); startDialogue(); return true; }
+  return false;
 }
 
 function handleChoiceInput() {
-  if (!DLG.showing || !DLG.page.choices || DLG.choice !== -1) return;
-  if (DLG.typing) return; // Z while typing only finishes the text (Deltarune behavior)
+  if (!DLG.showing || !DLG.page.choices || DLG.choice !== -1) return false;
+  if (DLG.typing) return false; // Z while typing only finishes the text (Deltarune behavior)
   const c = DLG.page.choices;
-  if (anyKey(["arrowup", "w", "arrowdown", "s"])) {
-    DLG.choiceSel = (DLG.choiceSel + 1) % c.length;
+  let next = -1;
+  if (anyKey(["arrowleft", "a"])) next = 0;
+  else if (c.length > 1 && anyKey(["arrowright", "d"])) next = 1;
+  else if (c.length > 2 && anyKey(["arrowup", "w"])) next = 2;
+  else if (c.length > 3 && anyKey(["arrowdown", "s"])) next = 3;
+  let selectionChanged = false;
+  if (next !== -1 && next !== DLG.choiceSel) {
+    DLG.choiceSel = next;
+    selectionChanged = true;
     playSound(cursorEl, 0.6);
   }
-  if (anyKey(["z", "enter", " "])) {
+  // obj_choicer_neo checks confirm before movement; keeping selection and
+  // confirmation on separate frames prevents a carried key from auto-picking.
+  if (!selectionChanged && DLG.choiceSel >= 0 && anyKey(["z", "enter", " "])) {
     playSound(cursorEl, 0.6);
     DLG.choice = DLG.choiceSel;
     dDone(); // choosing immediately closes the box and continues
+    return true;
   }
+  return selectionChanged;
 }
 
 function updateDialogue() {
   if (!DLG.showing) return;
-  handleChoiceInput();
+  if (handleChoiceInput()) return;
   if (DLG.page.choices && DLG.choice === -1 && !DLG.typing) {
     return; // waiting for choice (text already typed out)
   }
   if (anyKey(["z", "enter", " "])) { dDone(); return; }
   if (DLG.typing) {
-    if (DLG.pause > 0) { DLG.pause -= speedScale; return; }
-    const speed = DLG.page.slow ? 0.45 : 0.9; // chars per frame (Deltarune pace, at 60fps)
-    DLG.timer += speed * speedScale;
-    while (DLG.timer >= 1 && DLG.pos < DLG.page.text.length) {
-      const ch = DLG.page.text[DLG.pos];
-      if (ch === "^" && DLG.page.text[DLG.pos + 1] === "1") {
-        DLG.pos += 2; DLG.timer = 0; DLG.pause = 30;
-        break;
-      }
-      DLG.pos++;
-      DLG.timer -= 1;
-      playSound(blipEl, 0.18);
+    // obj_writer/Alarm_0.gml port: the alarm counts down in 30fps game frames
+    // (0.5 per render frame at 60fps), fires exactly one character step, then
+    // resets to rate. ^N pauses add 5..150 extra frames, so the text types at
+    // the original 30 characters per second with the original pause lengths.
+    DLG.alarm -= 0.5 * speedScale;
+    while (DLG.alarm <= 0 && DLG.typing && DLG.pos < DLG.page.text.length) {
+      const extra = dTypeStep();
+      if (DLG.alarm <= 0) DLG.alarm += DLG.rate + extra;
     }
     if (DLG.pos >= DLG.page.text.length) { DLG.typing = false; }
   }
+}
+
+// ^N pause durations from obj_writer/Alarm_0.gml, in 30fps game frames
+// (^1 = 5 extra frames + the base rate = a ~0.2s beat).
+const DLG_PAUSE_FRAMES = { 1: 5, 2: 10, 3: 15, 4: 20, 5: 30, 6: 40, 7: 60, 8: 90, 9: 150 };
+
+// scr_textsound: no blip for spaces, punctuation, or control characters.
+function isBlipChar(ch) {
+  return !" \n&!.?,:/\\|*^".includes(ch);
+}
+
+// One writer alarm fire. Returns extra pause frames (0 normally) so the
+// caller can add them to the alarm alongside the base rate.
+function dTypeStep() {
+  const t = DLG.page.text;
+  const ch = t[DLG.pos];
+  const nxt = t[DLG.pos + 1];
+  if (ch === "^" && nxt >= "1" && nxt <= "9") {
+    DLG.pos += 2;            // skip the caret and its pause digit
+    DLG.pos += 1;            // the character after the code appears with the pause
+    DLG.soundTimer = 0;
+    return DLG_PAUSE_FRAMES[nxt];
+  }
+  if (ch === "/") {          // page break (normally stripped at page ends)
+    DLG.pos++;
+    DLG.typing = false;
+    return -DLG.rate;
+  }
+  DLG.pos++;
+  DLG.soundTimer--;
+  if (DLG.soundTimer <= 0 && isBlipChar(ch)) {
+    playSound(blipEl, 0.18);
+    DLG.soundTimer = 2;      // every other character, like the original
+  }
+  return 0;
+}
+
+// Fixed page layout: the writer's format pass runs once at page open, so the
+// typed prefix is revealed across pre-wrapped lines and words never jump
+// between lines mid-typing.
+function pageLayout(text) {
+  const stripped = text.replace(/\^[1-9]/g, "");
+  return { lines: wrapDialogueText(stripped, DARKBOX.x1 - 58 - 20, 2) };
 }
 
 function visibleText() {
@@ -729,16 +878,28 @@ function drawPlayer() {
   ctx.drawImage(spr, Math.round(KRIS.x) - dw / 2, Math.round(KRIS.y) - dh, dw, dh);
 }
 
+let floorCanvas = null;
+
+function buildFloorCanvas() {
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const cc = c.getContext("2d");
+  // Rasterize at the native 640x360 resolution so every floor edge lands on
+  // a whole pixel before the finished layer is nearest-neighbor scaled.
+  cc.fillStyle = "#000";
+  cc.fillRect(0, 0, W, H);
+  cc.fillStyle = "#612c62";
+  cc.fillRect(FLOOR.tx, FLOOR.ty, FLOOR.tw, FLOOR.th);
+  cc.fillRect(FLOOR.hx, FLOOR.hy, FLOOR.hw, FLOOR.hh);
+  cc.fillRect(FLOOR.mx, FLOOR.my, FLOOR.mw, FLOOR.mh);
+  cc.fillRect(FLOOR.vx, FLOOR.vy, FLOOR.vw, FLOOR.vh);
+  return c;
+}
+
 function drawFloor() {
-  // black void
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, W, H);
-  // Flat sampled palette and stepped silhouette from the reference image.
-  ctx.fillStyle = "#612c62";
-  ctx.fillRect(FLOOR.tx, FLOOR.ty, FLOOR.tw, FLOOR.th);
-  ctx.fillRect(FLOOR.hx, FLOOR.hy, FLOOR.hw, FLOOR.hh);
-  ctx.fillRect(FLOOR.mx, FLOOR.my, FLOOR.mw, FLOOR.mh);
-  ctx.fillRect(FLOOR.vx, FLOOR.vy, FLOOR.vw, FLOOR.vh);
+  if (!floorCanvas) floorCanvas = buildFloorCanvas();
+  ctx.drawImage(floorCanvas, 0, 0, W, H);
 }
 
 function drawMan() {
@@ -752,12 +913,82 @@ function drawMan() {
   roundRect(ctx, x - 8, y - 33, 16, 33, 7); ctx.fill();
 }
 
+function updateTreeFx() {
+  const dt30 = 0.5 * speedScale;
+  TREE_FX.siner += dt30;
+  TREE_FX.blocktimer += dt30;
+
+  // obj_blocktree_bg creates one block at frame 20, fades it in through 30,
+  // fades it out from 38, and resets the whole cycle at 48.
+  if (!TREE_FX.block && TREE_FX.blocktimer >= 20 && TREE_FX.blocktimer < 20 + dt30 + 0.001) {
+    const t = TREES[3];
+    const dw = (t && t.img ? t.img.width * TREE.z : 162);
+    const dh = (t && t.img ? t.img.height * TREE.z : 139.5);
+    TREE_FX.block = {
+      x: TREE.x - dw / 2 + dw / 4 + Math.random() * (dw / 2),
+      y: TREE.y - dh + dh / 4 + Math.random() * (dh / 4),
+      vx: 0.4 + Math.random(),
+      // Original Deltarune code: vspeed = 0.7 + random(1.5). Tuned a bit
+      // lower (0.4..1.3) so the leaves drift down more gently.
+      vy: 0.4 + Math.random() * 0.9,
+      alpha: 0
+    };
+  }
+
+  const b = TREE_FX.block;
+  if (b) {
+    b.x += b.vx * dt30;
+    b.y += b.vy * dt30;
+    // GameMaker friction=-0.1 accelerates along the current direction, while
+    // gravity_direction=0 adds a rightward pull.
+    const speed = Math.hypot(b.vx, b.vy);
+    if (speed > 0) {
+      const faster = (speed + 0.1 * dt30) / speed;
+      b.vx *= faster; b.vy *= faster;
+    }
+    b.vx += 0.1 * dt30;
+    if (TREE_FX.blocktimer <= 30 && b.alpha < 1) b.alpha = Math.min(1, b.alpha + 0.2 * dt30);
+    if (TREE_FX.blocktimer >= 38) b.alpha = Math.max(0, b.alpha - 0.1 * dt30);
+  }
+
+  if (TREE_FX.blocktimer >= 48) {
+    TREE_FX.blocktimer %= 48;
+    TREE_FX.block = null;
+  }
+}
+
+function drawAnimatedBlockTree(t) {
+  if (!img.blockTreeTrunk || !img.blockTreeLeavesBack || !img.blockTreeLeavesFront) return false;
+  // Match the footprint of the selected flattened reference while drawing the
+  // real 105x91 component sprites at a single shared origin.
+  const dw = t.img.width * TREE.z, dh = t.img.height * TREE.z;
+  const left = Math.round(TREE.x) - dw / 2;
+  const top = TREE.y - dh;
+  ctx.drawImage(img.blockTreeTrunk, left, top, dw, dh);
+  ctx.drawImage(img.blockTreeLeavesBack,
+                left + Math.sin(TREE_FX.siner / 12) * 2,
+                top + Math.cos(TREE_FX.siner / 20) * 2, dw, dh);
+  ctx.drawImage(img.blockTreeLeavesFront,
+                left + Math.sin(TREE_FX.siner / 14),
+                top + Math.cos(TREE_FX.siner / 24), dw, dh);
+  if (TREE_FX.block && img.blockTreeFalling) {
+    ctx.save();
+    ctx.globalAlpha = TREE_FX.block.alpha;
+    const s = 1.5;
+    ctx.drawImage(img.blockTreeFalling, TREE_FX.block.x, TREE_FX.block.y,
+                  img.blockTreeFalling.width * s, img.blockTreeFalling.height * s);
+    ctx.restore();
+  }
+  return true;
+}
+
 function drawTreeAndMan() {
   // the selected egg-room tree (cycle with O + number keys, position with P)
   const t = TREES[state.treeSel];
   // The man occupies the background layer and should never cover the tree.
   if (!state.manGone) { drawMan(); }
   if (t && t.img) {
+    if (state.treeSel === 3 && drawAnimatedBlockTree(t)) return;
     const dw = t.img.width * TREE.z, dh = t.img.height * TREE.z;
     if (t.flipX) {
       ctx.save();
@@ -783,82 +1014,133 @@ function drawMoveMode() {
 }
 
 function playerBehindTree() {
-  // Depth is determined at the roots: above this baseline Kris is behind it.
-  return KRIS.y < TREE.y - 4;
+  // Depth line: above trunkTop's screen position Kris is drawn behind the
+  // tree, below it in front. Move the yellow line with [I] + arrows (trunkTop).
+  const t = TREES[state.treeSel];
+  const lineY = (t && t.trunkCollision && t.img)
+    ? TREE.y - t.img.height * TREE.z + (t.trunkTop || 185) * TREE.z
+    : TREE.y - 4;
+  return KRIS.y < lineY;
+}
+
+const DARKBOX = { x0: 24, y0: H - 168, x1: W - 24, y1: H - 2 };
+
+function drawImageFlipped(sprite, x, y, w, h, flipX, flipY) {
+  if (!sprite) return;
+  ctx.save();
+  ctx.translate(x + (flipX ? w : 0), y + (flipY ? h : 0));
+  ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+  ctx.drawImage(sprite, 0, 0, w, h);
+  ctx.restore();
+}
+
+function drawOfficialDarkBox() {
+  const { x0, y0, x1, y1 } = DARKBOX;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x0 + 20, y0 + 20, x1 - x0 - 40, y1 - y0 - 40);
+
+  const stretchW = x1 - x0 - 63;
+  const stretchH = y1 - y0 - 63;
+  if (!img.darkboxTop || !img.darkboxLeft || !img.darkboxCorners) {
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x0 + 2, y0 + 2, x1 - x0 - 4, y1 - y0 - 4);
+    return;
+  }
+
+  ctx.drawImage(img.darkboxTop, x0 + 32, y0, stretchW, 32);
+  drawImageFlipped(img.darkboxTop, x0 + 32, y1 + 1 - 32, stretchW, 32, false, true);
+  ctx.drawImage(img.darkboxLeft, x0, y0 + 32, 32, stretchH);
+  drawImageFlipped(img.darkboxLeft, x1 + 1 - 32, y0 + 32, 32, stretchH, true, false);
+
+  const frame = Math.floor(performance.now() / (1000 / 30 * 10)) % img.darkboxCorners.length;
+  const corner = img.darkboxCorners[frame];
+  ctx.drawImage(corner, x0, y0, 32, 32);
+  drawImageFlipped(corner, x1 + 1 - 32, y0, 32, 32, true, false);
+  drawImageFlipped(corner, x0, y1 + 1 - 32, 32, 32, false, true);
+  drawImageFlipped(corner, x1 + 1 - 32, y1 + 1 - 32, 32, 32, true, true);
+}
+
+function wrapDialogueText(text, maxWidth, scale) {
+  if (!text) return [];
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/(\s+)/)) {
+    if (word.includes("\n")) {
+      for (const part of word.split("\n")) {
+        if (part) line += part;
+        lines.push(line.trimEnd());
+        line = "";
+      }
+      continue;
+    }
+    const candidate = line + word;
+    if (line.trim().length > 0 && textWidth(candidate) * scale > maxWidth) {
+      lines.push(line.trimEnd());
+      line = word.trimStart();
+    } else {
+      line = candidate;
+    }
+  }
+  if (line.length || lines.length === 0) lines.push(line.trimEnd());
+  return lines;
+}
+
+function drawOfficialChoices(options) {
+  const centersX = [155, 487, 321, 327];
+  const centersY = [DARKBOX.y0 + 81, DARKBOX.y0 + 81,
+                    DARKBOX.y0 + 41, DARKBOX.y0 + 120];
+  for (let i = 0; i < options.length; i++) {
+    const label = options[i];
+    const width = textWidth(label) * 2;
+    drawTextScaled(label, centersX[i] - width / 2, centersY[i] - 16,
+                   i === DLG.choiceSel ? "#ffff00" : "#fff", 2);
+  }
+
+  let targetX = 312;
+  let targetY = DARKBOX.y0 + 74;
+  if (DLG.choiceSel >= 0) {
+    const labelWidth = textWidth(options[DLG.choiceSel]) * 2;
+    targetX = centersX[DLG.choiceSel] - labelWidth / 2 - 22;
+    targetY = centersY[DLG.choiceSel] - 8;
+  }
+  DLG.heartX += (targetX - DLG.heartX) * 0.8;
+  DLG.heartY += (targetY - DLG.heartY) * 0.8;
+  if (img.choiceHeart) {
+    ctx.drawImage(img.choiceHeart, Math.round(DLG.heartX), Math.round(DLG.heartY), 18, 18);
+  }
 }
 
 function drawDialogueBox() {
-  if (!DLG.showing) return;
-  const bx = 22, by = H - 108, bw = W - 44, bh = 88;
-  ctx.fillStyle = "#ffffff";
-  roundRect(ctx, bx, by, bw, bh, 10);
-  ctx.fill();
-  ctx.strokeStyle = "#000";
-  ctx.lineWidth = 2;
-  roundRect(ctx, bx, by, bw, bh, 10);
-  ctx.stroke();
+  if (!DLG.showing || !DLG.page) return;
+  // The room is enlarged 4/3 to fill its 854x480 canvas. At 75%, the UI's
+  // final Chrome footprint is again Deltarune's native 592x166 pixels.
+  const uiScale = DIALOG_SIZES[settings.dialogSize].scale;
+  const pivotX = (DARKBOX.x0 + DARKBOX.x1) / 2;
+  const pivotY = DARKBOX.y1;
+  ctx.save();
+  ctx.translate(pivotX, pivotY);
+  ctx.scale(uiScale, uiScale);
+  ctx.translate(-pivotX, -pivotY);
+  drawOfficialDarkBox();
 
   const page = DLG.page;
-  let txt = visibleText();
-  let line = "";
-  const maxW = bw - 34;
-  const lines = [];
-  for (const ch of txt) {
-    const w = textWidth(line + ch);
-    if (w > maxW && line.length > 0) { lines.push(line); line = ch; }
-    else { line += ch; }
-  }
-  if (line.length > 0 || lines.length === 0) lines.push(line);
-  const lh = 16;
-  let y = by + 18;
-  for (const l of lines.slice(0, 3)) {
-    drawText(l, bx + 18, y, "#000");
-    y += lh;
-  }
-
-  // choice box
-  if (page.choices && DLG.typing === false) {
-    const opts = page.choices;
-    const maxOptW = Math.max(...opts.map(o => textWidth(o))) + 24;
-    const cbx = bx + bw - maxOptW - 20;
-    const cby = by - 14 - opts.length * 20;
-    ctx.fillStyle = "#ffffff";
-    roundRect(ctx, cbx, cby, maxOptW, opts.length * 20 + 10, 6);
-    ctx.fill();
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    roundRect(ctx, cbx, cby, maxOptW, opts.length * 20 + 10, 6);
-    ctx.stroke();
-    for (let i = 0; i < opts.length; i++) {
-      drawText(opts[i], cbx + 18, cby + 8 + i * 20, "#000");
-      if (i === DLG.choiceSel) {
-        // the red SOUL heart cursor (Deltarune choice cursor)
-        drawSoul(cbx + 11, cby + 15 + i * 20, 0.8);
-      }
+  if (page.choices && !DLG.typing) {
+    drawOfficialChoices(page.choices);
+  } else {
+    // Reveal the typed prefix across the pre-wrapped fixed lines (Deltarune
+    // formats each page once, so the layout never reflows mid-typing).
+    const layout = DLG.layout || pageLayout(page.text);
+    const shown = visibleText().length;
+    let prev = 0, y = DARKBOX.y0 + 28;
+    for (let i = 0; i < layout.lines.length && i < 3; i++) {
+      const take = Math.max(0, Math.min(layout.lines[i].length, shown - prev));
+      if (take > 0) drawTextScaled(layout.lines[i].slice(0, take), 58, y, "#fff", 2);
+      prev += layout.lines[i].length;
+      y += 36;
     }
   }
-
-  // advance arrow
-  if (!DLG.typing && !page.choices) {
-    const blink = (Math.floor(Date.now() / 400) % 2) === 0;
-    if (blink) {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(bx + bw - 22, by + bh - 22, 9, 9);
-    }
-  }
-}
-
-function drawSoul(x, y, s) {
-  // red SOUL heart: two lobes on top, point at the bottom
-  ctx.fillStyle = "#ff0000";
-  ctx.beginPath();
-  ctx.arc(x - 4 * s, y - 3 * s, 4 * s, 0, Math.PI * 2);
-  ctx.arc(x + 4 * s, y - 3 * s, 4 * s, 0, Math.PI * 2);
-  ctx.moveTo(x - 8 * s, y - 2 * s);
-  ctx.lineTo(x + 8 * s, y - 2 * s);
-  ctx.lineTo(x, y + 8 * s);
-  ctx.closePath();
-  ctx.fill();
+  ctx.restore();
 }
 
 function roundRect(c, x, y, w, h, r) {
@@ -895,6 +1177,176 @@ function drawTreeHudLines() {
   drawText("Tree " + (state.treeSel + 1) + "/" + TREES.length + ": " + TREES[state.treeSel].name, 12, 30, "#aaa");
   drawText("[O] pick a tree   [P] move tree", 12, 46, "#888");
   if (settings.walkMode === 1) { drawText("X/Shift: run   (Deltarune walk code)", 12, 62, "#888"); }
+}
+
+// [I] collision debug: solid alpha pixels for alternate trees (red), the egg
+// room trunk/root box (green), man solid (cyan), trunk
+// line (yellow), Kris's collision point + body (red), man (cyan), live numbers.
+// Shape editor: [ ] pick a shape, arrows move it, Shift+arrows resize, R reset.
+function treeColOverlay(t) {
+  if (!t || !t.col || !t.col.w) return null;
+  if (!t.ovCanvas) {
+    const c = document.createElement("canvas");
+    c.width = t.col.w; c.height = t.col.h;
+    const cc = c.getContext("2d");
+    const id = cc.createImageData(c.width, c.height);
+    for (let i = 0; i < t.col.data.length; i++) {
+      if (t.col.data[i] > 40) { id.data[i * 4] = 255; id.data[i * 4 + 3] = 150; }
+    }
+    cc.putImageData(id, 0, 0);
+    t.ovCanvas = c;
+  }
+  return t.ovCanvas;
+}
+
+function shapeReport(id) {
+  const t = TREES[state.treeSel];
+  if (id === "box") {
+    return "box x=" + COLLBOX.x + " y=" + COLLBOX.y + " w=" + COLLBOX.w + " h=" + COLLBOX.h +
+           " (x " + COLLBOX.x + ".." + (COLLBOX.x + COLLBOX.w) + ", y " + COLLBOX.y + ".." + (COLLBOX.y + COLLBOX.h) + ")";
+  }
+  if (id === "trunkTop") {
+    const y = t.img ? TREE.y - t.img.height * TREE.z + (t.trunkTop || 185) * TREE.z : -1;
+    return "trunkTop row=" + (t.trunkTop ?? "-") + " (screen y=" + Math.round(y) + ")";
+  }
+  if (id === "kris") return "kris offset dx=" + KRIS_OFF.x + " dy=" + KRIS_OFF.y;
+  if (id === "man") return "man x=" + MAN_POS.x + " y=" + MAN_POS.y + " (" + MAN_W + "x" + MAN_H + ")";
+  return id;
+}
+
+function resetShape(id) {
+  if (id === "box") {
+    COLLBOX.x = 298; COLLBOX.y = 185;
+    COLLBOX.w = 64; COLLBOX.h = 24;
+  } else if (id === "trunkTop") {
+    const t = TREES[state.treeSel];
+    if (t.trunkCollision) t.trunkTop = 185;
+  } else if (id === "kris") {
+    KRIS_OFF.x = 0; KRIS_OFF.y = 0;
+  } else if (id === "man") {
+    MAN_POS.x = 326; MAN_POS.y = 186;
+    MAN_W = 16; MAN_H = 46;
+  }
+}
+
+function drawCollisionDebug() {
+  if (!state.colDbg || !state.started) return;
+  const t = TREES[state.treeSel];
+  // Alternate selectable trees use alpha collision. The animated egg-room
+  // tree intentionally does not: only its green trunk/root box is solid.
+  if (t && !t.trunkCollision && t.img && t.col) {
+    const ov = treeColOverlay(t);
+    if (ov) {
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      const dw = t.img.width * TREE.z, dh = t.img.height * TREE.z;
+      if (t.flipX) {
+        ctx.translate(Math.round(TREE.x), 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(ov, -dw / 2, TREE.y - dh, dw, dh);
+      } else {
+        ctx.drawImage(ov, Math.round(TREE.x) - dw / 2, TREE.y - dh, dw, dh);
+      }
+      ctx.restore();
+    }
+  }
+  if (t && t.trunkCollision) {
+    // green collision box: SOLID (blocks Kris)
+    ctx.fillStyle = "rgba(80,255,120,0.30)";
+    ctx.fillRect(COLLBOX.x, COLLBOX.y, COLLBOX.w, COLLBOX.h);
+    ctx.strokeStyle = debugSel === "box" ? "#ffffff" : "#7fff9a";
+    ctx.lineWidth = debugSel === "box" ? 2 : 1;
+    ctx.strokeRect(COLLBOX.x - 0.5, COLLBOX.y - 0.5, COLLBOX.w + 1, COLLBOX.h + 1);
+    // tree talk zone (Z in front of the tree) - follows the box
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(COLLBOX.x - 10, COLLBOX.y + COLLBOX.h - 10, COLLBOX.w + 20, 22);
+    ctx.setLineDash([]);
+    // trunk line: first sprite row of the solid trunk
+    const trunkY = TREE.y - t.img.height * TREE.z + (t.trunkTop || 185) * TREE.z;
+    ctx.fillStyle = debugSel === "trunkTop" ? "#ffffff" : "#ffd23f";
+    ctx.fillRect(0, trunkY, W, debugSel === "trunkTop" ? 2 : 1);
+  }
+  // man interaction guide (cyan outline only; it does not block movement)
+  ctx.strokeStyle = debugSel === "man" ? "#ffffff" : "#4fd2ff";
+  ctx.lineWidth = debugSel === "man" ? 2 : 1;
+  ctx.strokeRect(MAN_POS.x - MAN_W / 2, MAN_POS.y - MAN_H, MAN_W, MAN_H);
+  // Kris: collision point (feet + offset) + real sprite body box
+  const kx = Math.round(KRIS.x + KRIS_OFF.x), ky = Math.round(KRIS.y + KRIS_OFF.y);
+  ctx.fillStyle = debugSel === "kris" ? "#ffffff" : "#ff5555";
+  ctx.beginPath();
+  ctx.arc(kx, ky, debugSel === "kris" ? 4 : 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#ff5555";
+  const set = krisSets[settings.krisSet];
+  if (set && set[KRIS.dir]) {
+    const spr = set[KRIS.dir][KRIS.anim];
+    if (spr) {
+      const pw = spr.width * 1.5, ph = spr.height * 1.5;
+      ctx.strokeRect(Math.round(KRIS.x) - pw / 2, Math.round(KRIS.y) - ph, pw, ph);
+    }
+  } else {
+    ctx.strokeRect(kx - 6, ky - 34, 12, 34);
+  }
+  // live numbers
+  const cx = 12;
+  let y = 80;
+  drawText("COLLISION DEBUG  [I] hide   shape: " + (debugSel === null ? "none" : debugSel.toUpperCase()), cx, y, "#fff"); y += 16;
+  drawText("Kris: " + Math.round(KRIS.x) + ", " + Math.round(KRIS.y) +
+           "   off " + KRIS_OFF.x + ", " + KRIS_OFF.y, cx, y, "#fff"); y += 14;
+  drawText("  collide=" + (roomCollides(KRIS.x + KRIS_OFF.x, KRIS.y + KRIS_OFF.y) ? "YES" : "no") +
+           "  floor=" + (floorContains(KRIS.x, KRIS.y) ? "YES" : "no"), cx, y, "#888"); y += 14;
+  drawText("  behindTree=" + (playerBehindTree() ? "YES" : "no") +
+           "  nearMan=" + (nearMan() ? "YES" : "no"), cx, y, "#888"); y += 14;
+  drawText("Tree: " + Math.round(TREE.x) + ", " + Math.round(TREE.y) +
+           "  z=" + TREE.z, cx, y, "#fff"); y += 14;
+  if (t.trunkCollision) {
+    const lineY = TREE.y - t.img.height * TREE.z + (t.trunkTop || 185) * TREE.z;
+    drawText("  sel=" + (state.treeSel + 1) + "/" + TREES.length +
+             "  trunkTop=" + t.trunkTop + " (depth y=" + Math.round(lineY) + ")", cx, y, "#888"); y += 14;
+  } else {
+    drawText("  sel=" + (state.treeSel + 1) + "/" + TREES.length + "  full alpha", cx, y, "#888"); y += 14;
+  }
+  if (t.trunkCollision) {
+    drawText("Box: x " + COLLBOX.x + ".." + (COLLBOX.x + COLLBOX.w) +
+             "  y " + COLLBOX.y + ".." + (COLLBOX.y + COLLBOX.h) +
+             "  (" + COLLBOX.w + "x" + COLLBOX.h + ") SOLID", cx, y, "#888"); y += 14;
+  }
+  drawText("Man: " + Math.round(MAN_POS.x) + ", " + Math.round(MAN_POS.y) +
+           "  (" + MAN_W + "x" + MAN_H + ")", cx, y, "#888"); y += 14;
+  drawText("EDIT: [ ] shape  arrows move (4px)  Shift+arrows size  R reset  (WASD moves Kris)", cx, y + 2, "#aaa");
+}
+
+// detailed collision logs for testing (only while the [I] overlay is on)
+function traceCollision() {
+  if (!state.colDbg) return;
+  const x = KRIS.x + KRIS_OFF.x, y = KRIS.y + KRIS_OFF.y;
+  const t = TREES[state.treeSel];
+  const inBox = !!(t && t.trunkCollision) &&
+                x > COLLBOX.x && x < COLLBOX.x + COLLBOX.w &&
+                y > COLLBOX.y && y < COLLBOX.y + COLLBOX.h;
+  const inTree = roomCollides(x, y);
+  const behind = playerBehindTree();
+  const near = nearMan();
+  if (inBox !== COL_TRACE.box) {
+    COL_TRACE.box = inBox;
+    colLog("Kris " + (inBox ? "ENTERED" : "LEFT") + " collision box @ (" + Math.round(x) + "," + Math.round(y) +
+           ")  off=(" + KRIS_OFF.x + "," + KRIS_OFF.y + ")");
+  }
+  if (inTree !== COL_TRACE.tree) {
+    COL_TRACE.tree = inTree;
+    colLog("Kris " + (inTree ? "BLOCKED by collision" : "clear of collision") +
+           " @ (" + Math.round(x) + "," + Math.round(y) + ")");
+  }
+  if (behind !== COL_TRACE.behind) {
+    COL_TRACE.behind = behind;
+    colLog("Kris " + (behind ? "now BEHIND tree" : "now IN FRONT of tree") + " @ y=" + Math.round(y));
+  }
+  if (near !== COL_TRACE.nearMan) {
+    COL_TRACE.nearMan = near;
+    colLog("Kris " + (near ? "within man talk range" : "out of man range") +
+           " dist=" + Math.round(Math.hypot(KRIS.x - MAN_POS.x, KRIS.y - MAN_POS.y)));
+  }
 }
 
 function drawTreeSelector() {
@@ -955,6 +1407,7 @@ function resetRoomRun() {
   KRIS.moving = false; KRIS.anim = 0; KRIS.animT = 0;
   DT.facing = 2; DT.idleLast = true;
   DT.walktimer = 0; DT.walkbuffer = 0; DT.runtimer = 0;
+  TREE_FX.siner = 0; TREE_FX.blocktimer = 0; TREE_FX.block = null;
   DLG.queue.length = 0; DLG.showing = false; DLG.page = null;
 }
 
@@ -1041,9 +1494,12 @@ function drawTitle() {
         inc: () => updateSetting(() => { settings.manVisible = !settings.manVisible; }) },
       { label: "Classic menu",       value: () => settings.menuStyle === 0 ? "ON" : "OFF",
         dec: () => updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }),
-        inc: () => updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }) }
+        inc: () => updateSetting(() => { settings.menuStyle = (settings.menuStyle + 1) % MENU_STYLES.length; }) },
+      { label: "Dialog size",        value: () => DIALOG_SIZES[settings.dialogSize].name,
+        dec: () => updateSetting(() => { settings.dialogSize = (settings.dialogSize + DIALOG_SIZES.length - 1) % DIALOG_SIZES.length; }),
+        inc: () => updateSetting(() => { settings.dialogSize = (settings.dialogSize + 1) % DIALOG_SIZES.length; }) }
     ];
-    let y = 100;
+    let y = 88;
     for (let i = 0; i < rows.length; i++) {
       const sel = i === state.menuSel;
       drawText(rows[i].label, 30, y, sel ? "#ff6b6b" : "#fff");
@@ -1052,11 +1508,11 @@ function drawTitle() {
       drawButton(170, y - 2, 26, "<", sel); addMenuBtn(170, y - 2, 26, "<", rows[i].dec);
       drawText(rows[i].value(), 205, y, "#fff");
       drawButton(380, y - 2, 26, ">", sel); addMenuBtn(380, y - 2, 26, ">", rows[i].inc);
-      y += 30;
+      y += 27;
     }
     drawText("Walk code: " + WALK_MODES[settings.walkMode].hint, 30, y + 12, "#aaa");
     drawText("Man stays talkable when hidden. Settings save automatically.", 30, y + 28, "#aaa");
-    drawButton(120, y + 46, 100, "BACK", state.menuSel === 5);
+    drawButton(120, y + 46, 100, "BACK", state.menuSel === 6);
     addMenuBtn(120, y + 46, 100, "BACK", () => { state.menu = "title"; });
     drawText("Arrows/WASD + Z/Enter, or click. Esc: back", 22, canvas.height - 30, "#aaa");
   }
@@ -1086,12 +1542,15 @@ function frame(ts) {
   document.body.classList.toggle("room-active",
     state.started || (state.menu === "title" && settings.menuStyle === 1));
   if (state.started && !state.treeSelMode && !state.moveMode) {
-    handleInteract();
+    const openedDialogue = handleInteract();
     if (!tryExitRoom()) {
       updatePlayer();
-      updateDialogue();
+      // The key that opened the box must not also finish its first page.
+      if (!openedDialogue) updateDialogue();
     }
   }
+  updateTreeFx();
+  traceCollision();
   ctx.save();
   ctx.scale(RENDER_SCALE, RENDER_SCALE);
   drawFloor();
@@ -1100,6 +1559,7 @@ function frame(ts) {
   drawHud();
   drawTreeSelector();
   drawMoveMode();
+  drawCollisionDebug();
   drawDialogueBox();
   ctx.restore();
   drawTitle();
@@ -1261,6 +1721,14 @@ async function boot() {
   }
   img.egg = await loadImage(ASSETS.egg);
   img.crackedLogo = await loadImage(ASSETS.crackedLogo);
+  img.darkboxTop = await loadImage(DARKBOX_ASSETS.top);
+  img.darkboxLeft = await loadImage(DARKBOX_ASSETS.left);
+  img.darkboxCorners = await Promise.all(DARKBOX_ASSETS.corners.map(loadImage));
+  img.choiceHeart = await loadImage(DARKBOX_ASSETS.heart);
+  img.blockTreeTrunk = await loadImage(BLOCKTREE_ASSETS.trunk);
+  img.blockTreeLeavesBack = await loadImage(BLOCKTREE_ASSETS.leavesBack);
+  img.blockTreeLeavesFront = await loadImage(BLOCKTREE_ASSETS.leavesFront);
+  img.blockTreeFalling = await loadImage(BLOCKTREE_ASSETS.fallingBlock);
   for (let i = 0; i < TREES.length; i++) {
     const raw = await loadImage(TREES[i].file);
     TREES[i].img = TREES[i].crop ? cropImage(raw, TREES[i].crop) : raw;
@@ -1272,6 +1740,7 @@ async function boot() {
   fontAtlasWhite = tintAtlas("#ffffff");
   fontAtlasGray = tintAtlas("#999999");
   fontAtlasRed = tintAtlas("#ff6b6b");
+  fontAtlasYellow = tintAtlas("#ffff00");
 
   // audio
   musicEl = makeEl(ASSETS.music, true);
@@ -1302,6 +1771,73 @@ async function boot() {
       state.haveAlleggs = !state.haveAlleggs;
       state.dbg = true;
     }
+    // I toggles the collision debug overlay (tree solids, green collision box,
+    // Kris point). The box is auto-selected so arrow keys move it right away;
+    // WASD still moves Kris. [ ] cycles shapes, including back to "none".
+    if (k === "i" && !state.treeSelMode && !state.moveMode) {
+      state.colDbg = !state.colDbg;
+      debugSel = state.colDbg ? "box" : null;
+      if (state.colDbg) {
+        // fresh trace states so every transition logs this session
+        COL_TRACE.box = COL_TRACE.tree = COL_TRACE.behind = COL_TRACE.nearMan = false;
+        colLog("collision debug ON | shapes: box, trunkTop, kris, man | [ ] switch, arrows move (4px), Shift+arrows size, R reset | WASD moves Kris");
+        colLog("current: " + shapeReport("box") + " | " + shapeReport("trunkTop") + " | " + shapeReport("man"));
+      } else {
+        if (KRIS_OFF.x !== 0 || KRIS_OFF.y !== 0) {
+          KRIS_OFF.x = 0; KRIS_OFF.y = 0;
+          colLog("kris offset reset to 0,0 (overlay off)");
+        }
+        colLog("collision debug OFF | arrows move Kris again");
+      }
+      // release any held arrow so a held key can't keep Kris walking mid-edit
+      if (state.colDbg) for (const ak of ["arrowleft", "arrowright", "arrowup", "arrowdown"]) keys[ak] = false;
+      return;
+    }
+    // shape editor: [ ] pick a shape, arrows move it, Shift+arrows resize, R reset
+    if (state.colDbg && !state.treeSelMode && !state.moveMode) {
+      const t = TREES[state.treeSel];
+      if (k === "[" || k === "]") {
+        const idx = debugSel === null ? 0 : DEBUG_SHAPES.indexOf(debugSel) + 1;
+        debugSel = idx >= DEBUG_SHAPES.length ? null : DEBUG_SHAPES[idx];
+        colLog("shape selected: " + (debugSel === null ? "none (arrows move Kris again)" : debugSel.toUpperCase() + " -> " + shapeReport(debugSel)));
+        return;
+      }
+      if (debugSel !== null && k.indexOf("arrow") === 0) {
+        const S = 4; // fast step: arrows move/resize 4px per press (repeat = hold)
+        const d = k === "arrowleft" ? -S : k === "arrowright" ? S : 0;
+        const d2 = k === "arrowup" ? -S : k === "arrowdown" ? S : 0;
+        if (e.shiftKey) {
+          if (debugSel === "box") {
+            if (d !== 0) COLLBOX.w = Math.max(4, COLLBOX.w + d);
+            if (d2 !== 0) COLLBOX.h = Math.max(4, COLLBOX.h + d2);
+          } else if (debugSel === "man") {
+            if (d !== 0) MAN_W = Math.max(4, MAN_W + d);
+            if (d2 !== 0) MAN_H = Math.max(4, MAN_H + d2);
+          }
+        } else if (debugSel === "box") {
+          COLLBOX.x += d; COLLBOX.y += d2;
+        } else if (debugSel === "trunkTop") {
+          // no upper clamp: as a layer line it can sit below the sprite
+          if (t.trunkCollision) t.trunkTop = Math.max(0, t.trunkTop + d2 / S);
+        } else if (debugSel === "kris") {
+          KRIS_OFF.x += d; KRIS_OFF.y += d2;
+        } else if (debugSel === "man") {
+          MAN_POS.x += d; MAN_POS.y += d2;
+        }
+        colLog(shapeReport(debugSel));
+        return;
+      }
+      if (k === "r") {
+        if (debugSel !== null) {
+          resetShape(debugSel);
+          colLog("reset -> " + shapeReport(debugSel));
+        } else {
+          resetShape("box"); resetShape("trunkTop"); resetShape("kris"); resetShape("man");
+          colLog("reset all -> " + shapeReport("box") + " | " + shapeReport("trunkTop") + " | " + shapeReport("kris") + " | " + shapeReport("man"));
+        }
+        return;
+      }
+    }
     if (k === "o") {
       if (state.moveMode) state.moveMode = false;
       state.treeSelMode = !state.treeSelMode;
@@ -1315,10 +1851,10 @@ async function boot() {
     }
     if (state.moveMode) {
       if (k === "escape") { state.moveMode = false; return; }
-      if (k === "arrowleft" || k === "a") { TREE.x -= 1; syncMan(); return; }
-      if (k === "arrowright" || k === "d") { TREE.x += 1; syncMan(); return; }
-      if (k === "arrowup" || k === "w") { TREE.y -= 1; syncMan(); return; }
-      if (k === "arrowdown" || k === "s") { TREE.y += 1; syncMan(); return; }
+      if (k === "arrowleft" || k === "a") { TREE.x -= 1; return; }
+      if (k === "arrowright" || k === "d") { TREE.x += 1; return; }
+      if (k === "arrowup" || k === "w") { TREE.y -= 1; return; }
+      if (k === "arrowdown" || k === "s") { TREE.y += 1; return; }
       if (k === "+" || k === "=") { TREE.z = Math.min(3, +(TREE.z + 0.05).toFixed(2)); return; }
       if (k === "-" || k === "_") { TREE.z = Math.max(0.25, +(TREE.z - 0.05).toFixed(2)); return; }
       return;
@@ -1343,13 +1879,9 @@ async function boot() {
     }
   });
 
-  // keep the man anchored to the tree
-  function syncMan() {
-    MAN_POS.x = TREE.x + 2;
-    MAN_POS.y = TREE.y - 46;
-  }
-  syncMan();
-
+  // Start in the room immediately. The title/settings menu appears only after
+  // a completed run: talk to the Man, take the Egg, then walk down through the
+  // bottom entrance to leave.
   startGame();
   frame();
 }
