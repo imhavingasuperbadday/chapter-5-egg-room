@@ -1108,6 +1108,18 @@ function drawOfficialChoices(options) {
                    i === DLG.choiceSel ? "#ffff00" : "#fff", 2);
   }
 
+
+function drawOfficialChoices(options) {
+  const centersX = [155, 487, 321, 327];
+  const centersY = [DARKBOX.y0 + 81, DARKBOX.y0 + 81,
+                    DARKBOX.y0 + 41, DARKBOX.y0 + 120];
+  for (let i = 0; i < options.length; i++) {
+    const label = options[i];
+    const width = textWidth(label) * 2;
+    drawTextScaled(label, centersX[i] - width / 2, centersY[i] - 16,
+                   i === DLG.choiceSel ? "#ffff00" : "#fff", 2);
+  }
+
   let targetX = 312;
   let targetY = DARKBOX.y0 + 74;
   if (DLG.choiceSel >= 0) {
@@ -1727,6 +1739,7 @@ async function boot() {
   // kris sprite sets (loaded in parallel to avoid ~30 sequential round-trips)
   const krisResults = await Promise.all(KRIS_SETS.map(async (set) => {
     const loaded = { d: [], u: [], l: [], r: [] };
+    
     await Promise.all(["d", "u", "l", "r"].map(async (k) => {
       const frames = await Promise.all([0, 1, 2, 3].map((i) => loadImage(set.dir + "/" + k + "_" + i + ".png")));
       loaded[k] = frames;
@@ -1759,6 +1772,23 @@ async function boot() {
   img.font = fontImg;
   img.darkboxCorners = await Promise.all(DARKBOX_ASSETS.corners.map(loadImage));
   const treeRaws = await Promise.all(TREES.map((t) => loadImage(t.file)));
+    for (const k of ["d", "u", "l", "r"]) {
+      for (let i = 0; i < 4; i++) {
+        loaded[k].push(await loadImage(set.dir + "/" + k + "_" + i + ".png"));
+      }
+    }
+    krisSets.push(loaded);
+  }
+  img.egg = await loadImage(ASSETS.egg);
+  img.crackedLogo = await loadImage(ASSETS.crackedLogo);
+  img.darkboxTop = await loadImage(DARKBOX_ASSETS.top);
+  img.darkboxLeft = await loadImage(DARKBOX_ASSETS.left);
+  img.darkboxCorners = await Promise.all(DARKBOX_ASSETS.corners.map(loadImage));
+  img.choiceHeart = await loadImage(DARKBOX_ASSETS.heart);
+  img.blockTreeTrunk = await loadImage(BLOCKTREE_ASSETS.trunk);
+  img.blockTreeLeavesBack = await loadImage(BLOCKTREE_ASSETS.leavesBack);
+  img.blockTreeLeavesFront = await loadImage(BLOCKTREE_ASSETS.leavesFront);
+  img.blockTreeFalling = await loadImage(BLOCKTREE_ASSETS.fallingBlock);
   for (let i = 0; i < TREES.length; i++) {
     const raw = treeRaws[i];
     TREES[i].img = TREES[i].crop ? cropImage(raw, TREES[i].crop) : raw;
