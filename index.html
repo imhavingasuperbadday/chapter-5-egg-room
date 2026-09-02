@@ -199,6 +199,7 @@ const TREE_FX = { siner: 0, blocktimer: 0, block: null };
 const state = {
   started: false,
   manGone: false,      // the man leaves after the first interaction
+  manLeaving: false,   // set at interact start, applied when the scene drains
   gotEgg: false,
   talked: 0,           // 0 = first talk, 1 = second, 2+ = "..."
   haveAlleggs: false,  // debug toggle (normally you'd carry eggs from ch2-4)
@@ -274,6 +275,7 @@ function dDone() { // advance/close the current page
   const cb = DLG.onDone; DLG.onDone = null;
   if (cb) cb();
   if (DLG.queue.length > 0) { dMake(); }
+  else if (state.manLeaving) { state.manGone = true; state.manLeaving = false; }
 }
 
 function pushChoice(msg, options, onDone) {
@@ -324,7 +326,7 @@ function manInteract() {
             pushPage("* (Well^1, the man smiled.)/");
             pushPage("* (And he waved goodbye^1, for now.)/");
           }
-          state.manGone = true;
+          state.manLeaving = true;
         });
       } else {
         pushPage("* (Well^1, there is not a man here.)/");
@@ -342,7 +344,7 @@ function manInteract() {
     pushPage("* (...)/");
   }
   state.talked++;
-  state.manGone = true;
+  state.manLeaving = true;
 }
 
 function treeInteract() {
@@ -415,7 +417,16 @@ function makeEl(src, loop) {
 }
 function playSound(el, vol) {
   if (!el) return;
-  const c = el.cloneNode();
+  // Small round-robin pool: the text blip fires ~15x/sec, and cloneNode()
+  // per blip churns media elements. Reuse 4 nodes per source.
+  if (!el._pool) {
+    el._pool = [];
+    el._poolIdx = 0;
+    for (let i = 0; i < 4; i++) el._pool.push(el.cloneNode());
+  }
+  const c = el._pool[el._poolIdx];
+  el._poolIdx = (el._poolIdx + 1) % el._pool.length;
+  try { c.pause(); c.currentTime = 0; } catch (_) {}
   c.volume = vol || 0.9;
   c.play().catch(() => {});
 }
@@ -859,7 +870,7 @@ function visibleText() {
   let out = "";
   for (let i = 0; i < DLG.pos; i++) {
     const ch = t[i];
-    if (ch === "^" && t[i + 1] === "1") { i++; continue; }
+    if (ch === "^" && t[i + 1] >= "1" && t[i + 1] <= "9") { i++; continue; }
     out += ch;
   }
   return out;
@@ -1085,6 +1096,18 @@ function wrapDialogueText(text, maxWidth, scale) {
   if (line.length || lines.length === 0) lines.push(line.trimEnd());
   return lines;
 }
+
+function drawOfficialChoices(options) {
+  const centersX = [155, 487, 321, 327];
+  const centersY = [DARKBOX.y0 + 81, DARKBOX.y0 + 81,
+                    DARKBOX.y0 + 41, DARKBOX.y0 + 120];
+  for (let i = 0; i < options.length; i++) {
+    const label = options[i];
+    const width = textWidth(label) * 2;
+    drawTextScaled(label, centersX[i] - width / 2, centersY[i] - 16,
+                   i === DLG.choiceSel ? "#ffff00" : "#fff", 2);
+  }
+
 
 function drawOfficialChoices(options) {
   const centersX = [155, 487, 321, 327];
@@ -1386,7 +1409,6 @@ function addMenuBtn(x, y, w, label, action) {
 
 function handleMenuClick(mx, my) {
   if (state.started) return;
-  if (state.menu === "title") { startGame(); return; }
   for (const b of menuButtons) {
     if (mx >= b.x && mx <= b.x + b.w && my >= b.y - 4 && my <= b.y + b.h + 4) {
       playSound(cursorEl, 0.5);
@@ -1394,10 +1416,12 @@ function handleMenuClick(mx, my) {
       return;
     }
   }
+  if (state.menu === "title") { startGame(); return; }
 }
 
 function resetRoomRun() {
   state.manGone = false;
+  state.manLeaving = false;
   state.gotEgg = false;
   state.talked = 0;
   state.completedRun = false;
@@ -1463,6 +1487,7 @@ function drawTitle() {
   ctx.scale(MENU_UI.scale, MENU_UI.scale);
   if (state.menu === "title") {
     const blink = (Math.floor(Date.now() / 400) % 2) === 0;
+    const openSettings = () => { state.menu = "settings"; state.menuSel = 0; };
     if (settings.menuStyle === 0) {
       // The atlas gives the logo its original fractured/glitched lettering.
       drawCrackedLogo(22, 60);
@@ -1470,11 +1495,13 @@ function drawTitle() {
       drawText("A man is waiting behind the tree.", 22, 170, "#fff");
       if (blink) { drawText("Press Z to begin", 22, 220, "#fff"); }
       drawText("Press B for settings", 22, 240, "#fff");
+      addMenuBtn(14, 236, 180, "settings", openSettings);
     } else {
       // Keep the matching room visible; controls sit in the surrounding void.
       drawText("THE EGG ROOM", 18, 18, "#fff");
       if (blink) { drawText("Z / ENTER  BEGIN", 18, canvas.height - 38, "#fff"); }
       drawText("B  SETTINGS", 18, canvas.height - 20, "#888");
+      addMenuBtn(10, canvas.height - 24, 120, "settings", openSettings);
     }
   } else {
     drawText("SETTINGS", 22, 46, "#fff");
@@ -1709,9 +1736,42 @@ const GLYPH_CSV = `32;79;81;3;16;3;0
 
 async function boot() {
   loadSettings();
-  // kris sprite sets
-  for (const set of KRIS_SETS) {
+  // kris sprite sets (loaded in parallel to avoid ~30 sequential round-trips)
+  const krisResults = await Promise.all(KRIS_SETS.map(async (set) => {
     const loaded = { d: [], u: [], l: [], r: [] };
+    
+    await Promise.all(["d", "u", "l", "r"].map(async (k) => {
+      const frames = await Promise.all([0, 1, 2, 3].map((i) => loadImage(set.dir + "/" + k + "_" + i + ".png")));
+      loaded[k] = frames;
+    }));
+    return loaded;
+  }));
+  for (const loaded of krisResults) krisSets.push(loaded);
+  const [eggImg, crackedLogoImg, darkboxTopImg, darkboxLeftImg, choiceHeartImg,
+    blockTrunkImg, blockBackImg, blockFrontImg, blockFallImg, fontImg] = await Promise.all([
+    loadImage(ASSETS.egg),
+    loadImage(ASSETS.crackedLogo),
+    loadImage(DARKBOX_ASSETS.top),
+    loadImage(DARKBOX_ASSETS.left),
+    loadImage(DARKBOX_ASSETS.heart),
+    loadImage(BLOCKTREE_ASSETS.trunk),
+    loadImage(BLOCKTREE_ASSETS.leavesBack),
+    loadImage(BLOCKTREE_ASSETS.leavesFront),
+    loadImage(BLOCKTREE_ASSETS.fallingBlock),
+    loadImage(ASSETS.font)
+  ]);
+  img.egg = eggImg;
+  img.crackedLogo = crackedLogoImg;
+  img.darkboxTop = darkboxTopImg;
+  img.darkboxLeft = darkboxLeftImg;
+  img.choiceHeart = choiceHeartImg;
+  img.blockTreeTrunk = blockTrunkImg;
+  img.blockTreeLeavesBack = blockBackImg;
+  img.blockTreeLeavesFront = blockFrontImg;
+  img.blockTreeFalling = blockFallImg;
+  img.font = fontImg;
+  img.darkboxCorners = await Promise.all(DARKBOX_ASSETS.corners.map(loadImage));
+  const treeRaws = await Promise.all(TREES.map((t) => loadImage(t.file)));
     for (const k of ["d", "u", "l", "r"]) {
       for (let i = 0; i < 4; i++) {
         loaded[k].push(await loadImage(set.dir + "/" + k + "_" + i + ".png"));
@@ -1730,11 +1790,10 @@ async function boot() {
   img.blockTreeLeavesFront = await loadImage(BLOCKTREE_ASSETS.leavesFront);
   img.blockTreeFalling = await loadImage(BLOCKTREE_ASSETS.fallingBlock);
   for (let i = 0; i < TREES.length; i++) {
-    const raw = await loadImage(TREES[i].file);
+    const raw = treeRaws[i];
     TREES[i].img = TREES[i].crop ? cropImage(raw, TREES[i].crop) : raw;
     TREES[i].col = buildCollision(TREES[i].img);
   }
-  img.font = await loadImage(ASSETS.font);
   parseFontCsv(GLYPH_CSV);
   fontAtlasBlack = tintAtlas("#000000");
   fontAtlasWhite = tintAtlas("#ffffff");
